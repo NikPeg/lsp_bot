@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
-from bot.services.file_manager import FileManager
+from app.services.file_manager import FileManager
 
 
 class MenuBuilder:

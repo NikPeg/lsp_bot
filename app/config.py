@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
-from pydantic import BaseSettings, Field, HttpUrl, validator
 from typing import Optional
+
+from pydantic import Field, HttpUrl, validator
+from pydantic_settings import BaseSettings
+from loguru import logger
 
 class Settings(BaseSettings):
     # Основные настройки бота
@@ -17,11 +20,13 @@ class Settings(BaseSettings):
         path = Path(value)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created materials folder: {path}")
         return path
 
     @validator("LANGUAGE_DEFAULT")
     def validate_default_language(cls, value):
         if value not in ["ru", "en", "ar"]:
+            logger.warning(f"Invalid default language: {value}, using 'ru'")
             return "ru"
         return value
 
@@ -29,13 +34,14 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
-
-# Инициализация настроек
-try:
-    config = Settings()
-except Exception as e:
-    raise RuntimeError(f"Failed to load configuration: {e}")
+        extra = "ignore"
 
 def get_config() -> Settings:
     """Возвращает конфигурацию приложения"""
-    return config
+    try:
+        config = Settings()
+        logger.info("Configuration loaded successfully")
+        return config
+    except Exception as e:
+        logger.error(f"Failed to load configuration: {e}")
+        raise RuntimeError(f"Configuration error: {e}")

@@ -10,8 +10,8 @@ from aiogram.types import Message
 from aiogram.enums import ChatType
 from loguru import logger
 
-from config import get_config
-from bot.services import user_activity
+from ..config import get_config
+from app.services import user_activity
 
 # Получаем конфигурацию
 config = get_config()
