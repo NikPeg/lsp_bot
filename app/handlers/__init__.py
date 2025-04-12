@@ -1,32 +1,64 @@
-"""
-Инициализация и объединение всех роутеров обработчиков.
-"""
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
 
-from aiogram import Router
+from app.handlers import (
+    start,
+    main_menu,
+    profile,
+    learning_center,
+    schedule,
+    faculty,
+    materials,
+    admin
+)
+from app.config import get_config
+from app.middleware import (
+    LanguageMiddleware,
+    AntiForwardMiddleware,
+    ActivityTrackerMiddleware
+)
+from app.services import user_activity
 
-from app.handlers.admin import admin_router
-from app.handlers.start import start_router
-from app.handlers.main_menu import main_menu_router
-from app.handlers.profile import profile_router
-from app.handlers.learning_center import learning_center_router
-from app.handlers.faculty import faculty_router
-from app.handlers.materials import materials_router
-from app.handlers.schedule import schedule_router
-from app.handlers.channel import channel_router
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Создаем общий роутер для всех обработчиков
-router = Router()
+# Получение конфигурации
+config = get_config()
 
-# Подключаем все роутеры обработчиков к основному роутеру
-router.include_router(admin_router)
-router.include_router(start_router)
-router.include_router(main_menu_router)
-router.include_router(profile_router)
-router.include_router(learning_center_router)
-router.include_router(faculty_router)
-router.include_router(materials_router)
-router.include_router(schedule_router)
-router.include_router(channel_router)
+async def main():
+    # Инициализация бота и диспетчера
+    bot = Bot(token=config.BOT_TOKEN)
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
 
-# Экспортируем общий роутер
-__all__ = ["router"]
+    # Подключение middleware
+    dp.message.middleware(LanguageMiddleware())
+    dp.callback_query.middleware(LanguageMiddleware())
+    dp.message.middleware(AntiForwardMiddleware())
+    dp.update.middleware(ActivityTrackerMiddleware())
+
+    # Регистрация роутеров в правильном порядке
+    dp.include_router(start.start_router)
+    dp.include_router(main_menu.router)
+    dp.include_router(profile.router)
+    dp.include_router(learning_center.router)
+    dp.include_router(faculty.router)
+    dp.include_router(materials.router)
+    dp.include_router(schedule.router)
+    dp.include_router(admin.router)
+
+    # Запуск бота
+    try:
+        logger.info("Starting bot...")
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
+    except Exception as e:
+        logger.error(f"Bot stopped with error: {e}")
+    finally:
+        await bot.session.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())

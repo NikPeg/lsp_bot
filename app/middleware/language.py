@@ -4,13 +4,12 @@ Middleware для работы с языками пользователей.
 """
 
 from typing import Callable, Dict, Any, Awaitable
-
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery, Update
+from app.config import get_config
+from app.services.user_activity import UserActivityTracker
 
-from app.config import settings
-from app.services.user_service import UserService
-
+config = get_config()
 
 class LanguageMiddleware(BaseMiddleware):
     """
@@ -20,7 +19,7 @@ class LanguageMiddleware(BaseMiddleware):
 
     def __init__(self):
         """Инициализация middleware."""
-        self.user_service = UserService()
+        self.user_activity = UserActivityTracker()
 
     async def __call__(
             self,
@@ -48,17 +47,22 @@ class LanguageMiddleware(BaseMiddleware):
             user_id = event.from_user.id
 
         if user_id is not None:
-            # Получаем язык пользователя или устанавливаем по умолчанию
-            user_language = await self.user_service.get_user_language(user_id)
+            # Получаем данные пользователя
+            user_data = self.user_activity.get_user_activity(user_id)
 
-            if not user_language:
-                user_language = settings.LANGUAGE_DEFAULT
+            # Если пользователь новый - регистрируем
+            if not user_data:
+                self.user_activity.register_user(user_id)
+                user_data = self.user_activity.get_user_activity(user_id)
+
+            # Получаем язык пользователя или устанавливаем по умолчанию
+            user_language = user_data.get('language', config.LANGUAGE_DEFAULT)
 
             # Добавляем язык в данные обработчика
             data["user_language"] = user_language
 
             # Обновляем время последней активности пользователя
-            await self.user_service.register_user_activity(user_id)
+            self.user_activity.update_activity(user_id)
 
         # Вызываем следующий обработчик
         return await handler(event, data)

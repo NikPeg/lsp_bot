@@ -4,13 +4,11 @@ Middleware для отслеживания активности пользова
 """
 
 from typing import Callable, Dict, Any, Awaitable
-from datetime import datetime
-
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery, Update, User
 from loguru import logger
 
-from app.services.user_service import UserService
+from app.services.user_activity import UserActivityTracker
 
 
 class ActivityTrackerMiddleware(BaseMiddleware):
@@ -21,7 +19,7 @@ class ActivityTrackerMiddleware(BaseMiddleware):
 
     def __init__(self):
         """Инициализация middleware."""
-        self.user_service = UserService()
+        self.user_activity = UserActivityTracker()
 
     async def __call__(
             self,
@@ -31,49 +29,34 @@ class ActivityTrackerMiddleware(BaseMiddleware):
     ) -> Any:
         """
         Обработка входящего события и регистрация активности пользователя.
-
-        Args:
-            handler: Обработчик события.
-            event: Входящее событие (сообщение, callback и т.д.).
-            data: Данные события.
-
-        Returns:
-            Any: Результат обработки события.
         """
-        # Извлекаем пользователя из события
         user = self._get_user_from_event(event)
 
         if user:
-            # Регистрируем активность пользователя
             try:
-                await self.user_service.register_user_activity(user.id)
-                logger.debug(f"Активность пользователя {user.id} ({user.full_name}) зарегистрирована")
-            except Exception as e:
-                logger.error(f"Ошибка при регистрации активности пользователя {user.id}: {e}")
+                # Регистрируем пользователя (если еще не зарегистрирован)
+                if not self.user_activity.get_user_activity(user.id):
+                    self.user_activity.register_user(user.id)
 
-        # Вызываем следующий обработчик
+                # Обновляем время активности
+                self.user_activity.update_activity(user.id)
+                logger.debug(f"Activity updated for user {user.id} ({user.full_name})")
+            except Exception as e:
+                logger.error(f"Error updating activity for user {user.id}: {e}")
+
         return await handler(event, data)
 
     def _get_user_from_event(self, event) -> User or None:
         """
         Извлекает пользователя из разных типов событий.
-
-        Args:
-            event: Событие (сообщение, callback и т.д.).
-
-        Returns:
-            User: Объект пользователя из события или None, если пользователь не найден.
         """
-        if isinstance(event, Message):
-            return event.from_user
-        elif isinstance(event, CallbackQuery):
+        if isinstance(event, (Message, CallbackQuery)):
             return event.from_user
 
-        # Для других типов событий пробуем получить from_user
         try:
             if hasattr(event, 'from_user'):
                 return event.from_user
-        except:
+        except Exception:
             pass
 
         return None
