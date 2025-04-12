@@ -4,62 +4,64 @@
 """
 
 from datetime import datetime, timedelta
-
 from aiogram import Router, F
-from aiogram.filters import Command, ChatTypeFilter
+from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.enums import ChatType
 from loguru import logger
 
-from app.config import settings
-from app.services.user_service import UserService
+from config import get_config
+from bot.services import user_activity
+
+# Получаем конфигурацию
+config = get_config()
 
 # Создаем роутер для административных команд
 admin_router = Router()
 admin_router.message.filter(
-    ChatTypeFilter(chat_type=["group", "supergroup"]),
-    F.chat.id == settings.ADMIN_GROUP_ID
+    F.chat.type.in_({ChatType.GROUP, ChatType.SUPERGROUP}),
+    F.chat.id == config.ADMIN_GROUP_ID
 )
-
-# Сервис для работы с данными пользователей
-user_service = UserService()
-
 
 @admin_router.message(Command("users_count"))
 async def cmd_users_count(message: Message):
     """
     Обработчик команды для получения количества уникальных пользователей.
-
-    Args:
-        message (Message): Сообщение с командой.
     """
     try:
-        # Получаем общее количество пользователей
-        users_count = await user_service.get_total_users_count()
-
+        users_count = user_activity.get_total_users()
         await message.answer(
-            f"📊 Общее количество пользователей, запустивших бота: {users_count}"
+            f"📊 Общее количество пользователей: {users_count}"
         )
-        logger.info(f"Запрошена статистика по количеству пользователей: {users_count}")
+        logger.info(f"Admin requested users count: {users_count}")
     except Exception as e:
-        logger.error(f"Ошибка при получении статистики пользователей: {e}")
-        await message.answer("❌ Произошла ошибка при получении статистики.")
-
+        logger.error(f"Error getting users count: {e}")
+        await message.answer("❌ Ошибка при получении статистики")
 
 @admin_router.message(Command("active_users"))
 async def cmd_active_users(message: Message):
     """
-    Обработчик команды для получения количества активных пользователей за последнюю неделю.
-
-    Args:
-        message (Message): Сообщение с командой.
+    Обработчик команды для получения количества активных пользователей за неделю.
     """
     try:
-        # Определяем дату неделю назад
-        week_ago = datetime.now() - timedelta(days=7)
-
-        # Получаем количество активных пользователей
-        active_users_count = await user_service.get_active_users_count(since=week_ago)
-
+        active_count = user_activity.get_active_users_count(days=7)
         await message.answer(
-            f"📈 Количество активных пользователей за последнюю неделю: {active_users_count}"
+            f"📈 Активных пользователей за неделю: {active_count}"
         )
+        logger.info(f"Admin requested active users: {active_count}")
+    except Exception as e:
+        logger.error(f"Error getting active users: {e}")
+        await message.answer("❌ Ошибка при получении статистики")
+
+@admin_router.message(Command("cleanup"))
+async def cmd_cleanup_users(message: Message):
+    """
+    Очистка неактивных пользователей (неактивные более года)
+    """
+    try:
+        user_activity.cleanup_inactive_users(days=365)
+        await message.answer("✅ Очистка неактивных пользователей выполнена")
+        logger.info("Admin performed inactive users cleanup")
+    except Exception as e:
+        logger.error(f"Error cleaning inactive users: {e}")
+        await message.answer("❌ Ошибка при очистке пользователей")
