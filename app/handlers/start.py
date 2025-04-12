@@ -9,11 +9,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from loguru import logger
 
-from app.config import settings
+from ..config import get_config
 from app.keyboards.language_kb import get_language_keyboard
 from app.keyboards.main_menu_kb import get_main_menu_keyboard
 from app.services.user_service import UserService
 from app.utils.helpers import get_text
+
+# Получаем конфигурацию
+config = get_config()
 
 # Создаем роутер для команды старта и выбора языка
 start_router = Router()
@@ -27,16 +30,14 @@ class UserStates(StatesGroup):
 # Сервис для работы с данными пользователей
 user_service = UserService()
 
+# Доступные языки
+AVAILABLE_LANGUAGES = ["ru", "en", "ar"]
 
 @start_router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     """
     Обработчик команды /start.
     Приветствует пользователя и предлагает выбрать язык.
-
-    Args:
-        message (Message): Сообщение с командой.
-        state (FSMContext): Контекст состояния FSM.
     """
     user_id = message.from_user.id
     user_full_name = message.from_user.full_name
@@ -47,7 +48,7 @@ async def cmd_start(message: Message, state: FSMContext):
     logger.info(f"Пользователь {user_id} ({user_full_name}) запустил бота")
 
     # Получаем текущий язык пользователя или устанавливаем по умолчанию
-    current_language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    current_language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Устанавливаем состояние выбора языка
     await state.set_state(UserStates.language_selection)
@@ -65,22 +66,17 @@ async def cmd_start(message: Message, state: FSMContext):
         reply_markup=get_language_keyboard()
     )
 
-
 @start_router.callback_query(F.data.startswith("language_"))
 async def process_language_selection(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик выбора языка.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос с выбранным языком.
-        state (FSMContext): Контекст состояния FSM.
     """
     # Извлекаем код языка из данных callback
     selected_language = callback.data.split('_')[1]
     user_id = callback.from_user.id
 
     # Проверяем, что язык допустимый
-    if selected_language not in settings.AVAILABLE_LANGUAGES:
+    if selected_language not in AVAILABLE_LANGUAGES:
         await callback.answer("Язык не поддерживается / Language is not supported / اللغة غير مدعومة")
         return
 
@@ -104,15 +100,10 @@ async def process_language_selection(callback: CallbackQuery, state: FSMContext)
 
     logger.info(f"Пользователь {user_id} выбрал язык: {selected_language}")
 
-
 @start_router.message(Command("language"))
 async def cmd_change_language(message: Message, state: FSMContext):
     """
     Обработчик команды /language для смены языка.
-
-    Args:
-        message (Message): Сообщение с командой.
-        state (FSMContext): Контекст состояния FSM.
     """
     user_id = message.from_user.id
 
@@ -123,7 +114,7 @@ async def cmd_change_language(message: Message, state: FSMContext):
     await state.set_state(UserStates.language_selection)
 
     # Получаем текущий язык пользователя
-    current_language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    current_language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем текст на текущем языке
     language_selection_text = get_text(current_language, "language_selection")
