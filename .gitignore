@@ -1,0 +1,67 @@
+# Конфиденциальные данные
+.env
+*.env
+config.local.py
+
+# Данные пользователей
+data/users/
+data/users/.json
+data/users/.db
+
+# Учебные материалы (они должны добавляться отдельно)
+data/materials/
+data/materials/**/*
+
+# Кэш Python
+pycache/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Виртуальные окружения
+venv/
+env/
+ENV/
+.venv/
+.virtualenv/
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# БД
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE-специфичные файлы
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Дистрибутивы и сборки
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Файлы резервного копирования
+*~
+*.bak
+
+# Сессии и кэш
+.session
+.session-journal
