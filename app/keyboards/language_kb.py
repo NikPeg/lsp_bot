@@ -4,8 +4,6 @@
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from app.config import settings
-
 
 def get_language_keyboard() -> InlineKeyboardMarkup:
     """

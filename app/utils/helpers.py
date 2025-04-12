@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional
 from loguru import logger
 
-from config import get_config
+from ..config import get_config
 
 config = get_config()
 
