@@ -9,7 +9,6 @@ from aiogram.types import Message, CallbackQuery
 from loguru import logger
 
 from app.config import settings
-from app.handlers.start import UserStates
 from app.keyboards.faculty_kb import get_faculty_keyboard
 from app.keyboards.main_menu_kb import get_main_menu_keyboard
 from app.services.file_system import FileSystemService
