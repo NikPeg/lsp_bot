@@ -6,9 +6,10 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
-from app.config import settings
+from app.config import get_config
 from app.utils.helpers import get_text
 
+config = get_config()
 
 def get_subjects_keyboard(subjects: list, language: str) -> InlineKeyboardMarkup:
     """
@@ -306,17 +307,17 @@ def get_faculty_keyboard_dynamic(faculties: list, language: str) -> InlineKeyboa
     # Словарь для локализованных названий факультетов
     faculty_names = {
         "L": {
-            "ru": settings.FACULTY_L_NAME,
+            "ru": config.FACULTY_L_NAME,
             "en": "Faculty of Medicine",
             "ar": "كلية الطب"
         },
         "S": {
-            "ru": settings.FACULTY_S_NAME,
+            "ru": config.FACULTY_S_NAME,
             "en": "Faculty of Dentistry",
             "ar": "كلية طب الأسنان"
         },
         "P": {
-            "ru": settings.FACULTY_P_NAME,
+            "ru": config.FACULTY_P_NAME,
             "en": "Faculty of Pediatrics",
             "ar": "كلية طب الأطفال"
         }

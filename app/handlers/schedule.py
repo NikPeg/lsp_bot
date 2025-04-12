@@ -6,248 +6,163 @@
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InputFile
 from loguru import logger
 from pathlib import Path
 
-from app.config import settings
+from app.config import get_config
 from app.keyboards.main_menu_kb import get_main_menu_keyboard
 from app.keyboards.schedule_kb import get_schedule_keyboard
-from app.services.user_service import UserService
+from app.services.user_activity import UserActivityTracker
 from app.utils.helpers import get_text
+
+# Получаем конфигурацию
+config = get_config()
 
 # Создаем роутер для расписания
 schedule_router = Router()
 
-# Сервис для работы с данными пользователей
-user_service = UserService()
+# Инициализация сервиса
+user_activity = UserActivityTracker()
 
+# Список доступных расписаний
+SCHEDULE_TYPES = {
+    "deanery": {
+        "image": "deanery.jpg",
+        "text_key": "deanery_schedule_text"
+    },
+    "sports_doctor": {
+        "image": "sports_doctor.jpg",
+        "text_key": "sports_doctor_schedule_text"
+    },
+    "anatomy": {
+        "image": "anatomy.jpg",
+        "text_key": "anatomy_schedule_text"
+    },
+    "libraries": {
+        "image": "libraries.jpg",
+        "text_key": "libraries_schedule_text"
+    },
+    "pass_making": {
+        "image": "pass_making.jpg",
+        "text_key": "pass_making_schedule_text"
+    },
+    "practice": {
+        "image": "practice.jpg",
+        "text_key": "practice_schedule_text"
+    },
+    "departments": {
+        "image": "departments.jpg",
+        "text_key": "departments_schedule_text"
+    }
+}
 
 @schedule_router.callback_query(F.data == "schedule")
 async def show_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик перехода в раздел расписания.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
+    """Обработчик перехода в раздел расписания."""
     user_id = callback.from_user.id
+    user_activity.update_activity(user_id)
 
-    # Обновляем время последней активности
-    await user_service.register_user_activity(user_id)
+    user_data = user_activity.get_user_activity(user_id)
+    language = user_data.get('language', config.LANGUAGE_DEFAULT)
 
-    # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
-
-    # Получаем текст для расписания
-    schedule_text = get_text(language, "schedule_text")
-
-    # Отвечаем на callback, чтобы убрать индикатор загрузки
     await callback.answer()
-
-    # Редактируем сообщение, показывая меню расписания
     await callback.message.edit_text(
-        schedule_text,
+        get_text(language, "schedule_text"),
         reply_markup=get_schedule_keyboard(language)
     )
+    logger.info(f"User {user_id} opened schedule section")
 
-    logger.info(f"Пользователь {user_id} открыл раздел расписания")
-
-
-@schedule_router.callback_query(F.data == "schedule_deanery")
-async def show_deanery_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания деканата.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "deanery.jpg", "deanery_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_sports_doctor")
-async def show_sports_doctor_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания спортивного врача.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "sports_doctor.jpg", "sports_doctor_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_anatomy")
-async def show_anatomy_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания анатомички.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "anatomy.jpg", "anatomy_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_libraries")
-async def show_libraries_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания библиотек.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "libraries.jpg", "libraries_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_pass_making")
-async def show_pass_making_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания изготовления пропуска.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "pass_making.jpg", "pass_making_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_practice")
-async def show_practice_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания производственной практики.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "practice.jpg", "practice_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_departments")
-async def show_departments_schedule(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик для отображения расписания дежурных по кафедрам.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    await show_schedule_image(callback, "departments.jpg", "departments_schedule_text")
-
-
-@schedule_router.callback_query(F.data == "schedule_back")
-async def schedule_back_to_main(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик кнопки "Вернуться назад" из меню расписания.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        state (FSMContext): Контекст состояния FSM.
-    """
+@schedule_router.callback_query(F.data.startswith("schedule_"))
+async def handle_schedule_selection(callback: CallbackQuery, state: FSMContext):
+    """Общий обработчик для всех типов расписаний."""
     user_id = callback.from_user.id
+    schedule_type = callback.data.split('_', 1)[1]
 
-    # Обновляем время последней активности
-    await user_service.register_user_activity(user_id)
+    if schedule_type == "back":
+        await schedule_back_to_main(callback, state)
+        return
 
-    # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    if schedule_type not in SCHEDULE_TYPES:
+        logger.warning(f"Unknown schedule type: {schedule_type}")
+        return
 
-    # Получаем текст для главного меню
-    main_menu_text = get_text(language, "main_menu_text")
-
-    # Отвечаем на callback, чтобы убрать индикатор загрузки
-    await callback.answer()
-
-    # Редактируем сообщение, возвращаясь в главное меню
-    await callback.message.edit_text(
-        main_menu_text,
-        reply_markup=get_main_menu_keyboard(language)
+    await show_schedule_image(
+        callback,
+        SCHEDULE_TYPES[schedule_type]["image"],
+        SCHEDULE_TYPES[schedule_type]["text_key"]
     )
-
-    logger.info(f"Пользователь {user_id} вернулся из расписания в главное меню")
-
-
-@schedule_router.message(Command("schedule"))
-async def cmd_schedule(message: Message, state: FSMContext):
-    """
-    Обработчик команды /schedule.
-    Показывает меню расписания.
-
-    Args:
-        message (Message): Сообщение с командой.
-        state (FSMContext): Контекст состояния FSM.
-    """
-    user_id = message.from_user.id
-
-    # Обновляем время последней активности
-    await user_service.register_user_activity(user_id)
-
-    # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
-
-    # Получаем текст для расписания
-    schedule_text = get_text(language, "schedule_text")
-
-    # Отправляем сообщение с клавиатурой расписания
-    await message.answer(
-        schedule_text,
-        reply_markup=get_schedule_keyboard(language)
-    )
-
-    logger.info(f"Пользователь {user_id} открыл расписание через команду")
-
 
 async def show_schedule_image(callback: CallbackQuery, image_filename: str, text_key: str):
-    """
-    Вспомогательная функция для отображения изображения с расписанием.
-
-    Args:
-        callback (CallbackQuery): Callback-запрос.
-        image_filename (str): Имя файла изображения.
-        text_key (str): Ключ для получения текста описания.
-    """
+    """Отправляет изображение с расписанием."""
     user_id = callback.from_user.id
+    user_activity.update_activity(user_id)
 
-    # Обновляем время последней активности
-    await user_service.register_user_activity(user_id)
+    user_data = user_activity.get_user_activity(user_id)
+    language = user_data.get('language', config.LANGUAGE_DEFAULT)
 
-    # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
-
-    # Получаем текст описания для данного расписания
+    image_path = Path(config.IMAGES_FOLDER) / "schedule" / image_filename
     schedule_description = get_text(language, text_key)
 
-    # Формируем путь к изображению
-    image_path = settings.schedule_images_path / image_filename
-
-    # Отвечаем на callback, чтобы убрать индикатор загрузки
     await callback.answer()
 
-    if image_path.exists():
-        # Отправляем изображение с расписанием
-        with open(image_path, 'rb') as photo:
-            await callback.message.answer_photo(
-                photo=photo,
-                caption=schedule_description,
-                protect_content=True  # Запрет на пересылку
-            )
+    if not image_path.exists():
+        await callback.message.answer(
+            get_text(language, "image_not_found"),
+            reply_markup=get_schedule_keyboard(language)
+        )
+        logger.error(f"Image not found: {image_path}")
+        return
 
-        # Отправляем кнопку для возврата к расписанию
+    try:
+        # Отправляем изображение
+        await callback.message.answer_photo(
+            photo=InputFile(image_path),
+            caption=schedule_description,
+            protect_content=True
+        )
+
+        # Отправляем кнопку для возврата
         await callback.message.answer(
             get_text(language, "back_to_schedule"),
             reply_markup=get_schedule_keyboard(language)
         )
 
-        logger.info(f"Пользователь {user_id} просмотрел расписание: {image_filename}")
-    else:
-        # Если изображение не найдено
-        image_not_found_text = get_text(language, "image_not_found")
+        logger.info(f"User {user_id} viewed schedule: {image_filename}")
+    except Exception as e:
+        logger.error(f"Error sending schedule image: {e}")
         await callback.message.answer(
-            image_not_found_text,
+            get_text(language, "error_sending_image"),
             reply_markup=get_schedule_keyboard(language)
         )
-        logger.error(f"Изображение не найдено: {image_path}")
+
+@schedule_router.callback_query(F.data == "schedule_back")
+async def schedule_back_to_main(callback: CallbackQuery, state: FSMContext):
+    """Обработчик возврата в главное меню."""
+    user_id = callback.from_user.id
+    user_activity.update_activity(user_id)
+
+    user_data = user_activity.get_user_activity(user_id)
+    language = user_data.get('language', config.LANGUAGE_DEFAULT)
+
+    await callback.answer()
+    await callback.message.edit_text(
+        get_text(language, "main_menu_text"),
+        reply_markup=get_main_menu_keyboard(language)
+    )
+    logger.info(f"User {user_id} returned to main menu from schedule")
+
+@schedule_router.message(Command("schedule"))
+async def cmd_schedule(message: Message, state: FSMContext):
+    """Обработчик команды /schedule."""
+    user_id = message.from_user.id
+    user_activity.update_activity(user_id)
+
+    user_data = user_activity.get_user_activity(user_id)
+    language = user_data.get('language', config.LANGUAGE_DEFAULT)
+
+    await message.answer(
+        get_text(language, "schedule_text"),
+        reply_markup=get_schedule_keyboard(language)
+    )
+    logger.info(f"User {user_id} opened schedule via command")
