@@ -1,0 +1,12 @@
+{
+  "profile_button": "الحساب الشخصي",
+  "learning_center_button": "مركز التعلم",
+  "schedule_button": "الجدول الزمني",
+  "channel_button": "قناتنا",
+  "back_button": "رجوع",
+  "loading_file": "جاري تحميل الملف...",
+  "material_info": "المادة:\nالمادة: {subject}\nالنوع: {type}\nالفصل الدراسي: {semester}\nالاسم: {name}",
+  "no_materials_found": "لم يتم العثور على مواد",
+  "no_subjects_found": "لم يتم العثور على مواد دراسية",
+  "no_semesters_found": "لم يتم العثور على فصول دراسية"
+}

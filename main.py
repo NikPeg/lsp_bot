@@ -42,13 +42,13 @@ async def main():
 
     # Регистрация роутеров в правильном порядке
     dp.include_router(start.start_router)
-    dp.include_router(main_menu.router)
-    dp.include_router(profile.router)
-    dp.include_router(learning_center.router)
-    dp.include_router(faculty.router)
-    dp.include_router(materials.router)
-    dp.include_router(schedule.router)
-    dp.include_router(admin.router)
+    dp.include_router(main_menu.main_menu_router)
+    dp.include_router(profile.profile_router)
+    dp.include_router(learning_center.learning_center_router)
+    dp.include_router(faculty.faculty_router)
+    dp.include_router(materials.materials_router)
+    dp.include_router(schedule.schedule_router)
+    dp.include_router(admin.admin_router)
 
     # Запуск бота
     try:
