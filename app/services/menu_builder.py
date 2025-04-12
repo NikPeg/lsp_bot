@@ -1,282 +1,175 @@
-"""
-Модуль для динамического построения меню на основе файловой структуры.
-Преобразует структуру папок с материалами в элементы меню для бота.
-"""
-
-from typing import List, Dict, Optional, Any
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from loguru import logger
 
-from app.config import settings
-from app.services.file_system import FileSystemService
-from app.utils.helpers import get_text
+from bot.services.file_manager import FileManager
 
 
-class MenuBuilderService:
-    """
-    Сервис для построения меню на основе файловой структуры.
-    Преобразует папки и файлы в элементы меню бота.
-    """
+class MenuBuilder:
+    def __init__(self, file_manager: FileManager):
+        self.file_manager = file_manager
+        self.cache = {}  # Кэш для хранения уже построенных меню
 
-    def __init__(self):
-        """Инициализация сервиса."""
-        self.file_system_service = FileSystemService()
+    async def build_faculty_menu(self) -> InlineKeyboardMarkup:
+        """Строит меню выбора факультета"""
+        cache_key = "faculty_menu"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
 
-        # Словари для перевода технических названий
-        self.faculty_names = {
-            "L": {
-                "ru": settings.FACULTY_L_NAME,
-                "en": "Faculty of Medicine",
-                "ar": "كلية الطب"
-            },
-            "S": {
-                "ru": settings.FACULTY_S_NAME,
-                "en": "Faculty of Dentistry",
-                "ar": "كلية طب الأسنان"
-            },
-            "P": {
-                "ru": settings.FACULTY_P_NAME,
-                "en": "Faculty of Pediatrics",
-                "ar": "كلية طب الأطفال"
-            }
-        }
-
-        self.material_types = {
-            "lectures": {
-                "ru": "Лекции",
-                "en": "Lectures",
-                "ar": "المحاضرات"
-            },
-            "books": {
-                "ru": "Книги",
-                "en": "Books",
-                "ar": "الكتب"
-            },
-            "atlases": {
-                "ru": "Атласы",
-                "en": "Atlases",
-                "ar": "الأطالس"
-            },
-            "methods": {
-                "ru": "Методички",
-                "en": "Methodological materials",
-                "ar": "المواد المنهجية"
-            },
-            "exams": {
-                "ru": "Экзаменационные материалы",
-                "en": "Exam materials",
-                "ar": "مواد الامتحان"
-            },
-            "notes": {
-                "ru": "Шпаргалки и конспекты",
-                "en": "Notes and summaries",
-                "ar": "الملاحظات والملخصات"
-            }
-        }
-
-        self.semester_names = {
-            "semester1": {
-                "ru": "1 семестр",
-                "en": "1st semester",
-                "ar": "الفصل الدراسي الأول"
-            },
-            "semester2": {
-                "ru": "2 семестр",
-                "en": "2nd semester",
-                "ar": "الفصل الدراسي الثاني"
-            },
-            # ... добавьте остальные семестры по аналогии
-        }
-
-    async def build_faculty_menu(self, language: str) -> InlineKeyboardMarkup:
-        """
-        Строит меню выбора факультета на основе доступных папок.
-
-        Args:
-            language (str): Код языка пользователя.
-
-        Returns:
-            InlineKeyboardMarkup: Клавиатура с факультетами.
-        """
-        faculties = await self.file_system_service.get_faculties()
-        keyboard = []
+        keyboard = InlineKeyboardMarkup(row_width=2)
+        faculties = await self.file_manager.get_faculties()
 
         for faculty in faculties:
-            # Получаем локализованное название
-            faculty_name = self.faculty_names.get(faculty, {}).get(language, faculty)
-
-            keyboard.append([
+            keyboard.insert(
                 InlineKeyboardButton(
-                    text=faculty_name,
-                    callback_data=f"faculty_{faculty}"
+                    text=faculty.name,
+                    callback_data=f"faculty:{faculty.id}"
                 )
-            ])
-
-        # Добавляем кнопку возврата
-        keyboard.append([
-            InlineKeyboardButton(
-                text=get_text(language, "back_to_main_menu"),
-                callback_data="main_menu"
             )
-        ])
 
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+        self.cache[cache_key] = keyboard
+        return keyboard
 
-    async def build_subjects_menu(self, faculty: str, language: str) -> InlineKeyboardMarkup:
-        """
-        Строит меню выбора предмета на основе доступных папок.
+    async def build_subjects_menu(self, faculty_id: str) -> InlineKeyboardMarkup:
+        """Строит меню выбора предмета для указанного факультета"""
+        cache_key = f"subjects_menu:{faculty_id}"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
 
-        Args:
-            faculty (str): Код факультета.
-            language (str): Код языка пользователя.
+        keyboard = InlineKeyboardMarkup(row_width=2)
+        subjects = await self.file_manager.get_subjects(faculty_id)
 
-        Returns:
-            InlineKeyboardMarkup: Клавиатура с предметами.
-        """
-        subjects = await self.file_system_service.get_subjects(faculty)
-        keyboard = []
-
-        # Группируем кнопки по две в строке
-        for i in range(0, len(subjects), 2):
-            row = []
-            # Добавляем первую кнопку в строку
-            subject = subjects[i]
-            row.append(
+        for subject in subjects:
+            keyboard.insert(
                 InlineKeyboardButton(
-                    text=subject,
-                    callback_data=f"subject_{subject}"
+                    text=subject.name,
+                    callback_data=f"subject:{faculty_id}:{subject.id}"
                 )
             )
 
-            # Добавляем вторую кнопку, если она есть
-            if i + 1 < len(subjects):
-                subject = subjects[i + 1]
-                row.append(
-                    InlineKeyboardButton(
-                        text=subject,
-                        callback_data=f"subject_{subject}"
-                    )
-                )
-
-            keyboard.append(row)
-
-        # Добавляем кнопку возврата
-        keyboard.append([
+        keyboard.row(
             InlineKeyboardButton(
-                text=get_text(language, "back_button"),
-                callback_data="learning_center"
+                text="← Назад",
+                callback_data="back_to_faculties"
             )
-        ])
+        )
 
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+        self.cache[cache_key] = keyboard
+        return keyboard
 
-    async def build_material_types_menu(self, faculty: str, subject: str, language: str) -> InlineKeyboardMarkup:
-        """
-        Строит меню выбора типа материала на основе доступных папок.
+    async def build_materials_menu(
+            self,
+            faculty_id: str,
+            subject_id: str
+    ) -> InlineKeyboardMarkup:
+        """Строит меню выбора типа материалов"""
+        cache_key = f"materials_menu:{faculty_id}:{subject_id}"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
 
-        Args:
-            faculty (str): Код факультета.
-            subject (str): Название предмета.
-            language (str): Код языка пользователя.
+        keyboard = InlineKeyboardMarkup(row_width=2)
+        material_types = [
+            ("Лекции", "lectures"),
+            ("Книги", "books"),
+            ("Атласы", "atlases"),
+            ("Методички", "methods"),
+            ("Экзамены", "exams"),
+            ("Шпаргалки", "notes")
+        ]
 
-        Returns:
-            InlineKeyboardMarkup: Клавиатура с типами материалов.
-        """
-        material_types = await self.file_system_service.get_material_types(faculty, subject)
-        keyboard = []
-
-        for material_type in material_types:
-            # Получаем локализованное название
-            type_name = self.material_types.get(material_type, {}).get(language, material_type)
-
-            keyboard.append([
+        for name, callback in material_types:
+            keyboard.insert(
                 InlineKeyboardButton(
-                    text=type_name,
-                    callback_data=f"material_type_{material_type}"
+                    text=name,
+                    callback_data=f"material_type:{faculty_id}:{subject_id}:{callback}"
                 )
-            ])
-
-        # Добавляем кнопку возврата
-        keyboard.append([
-            InlineKeyboardButton(
-                text=get_text(language, "back_button"),
-                callback_data="back_to_subjects"
             )
-        ])
 
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+        keyboard.row(
+            InlineKeyboardButton(
+                text="← Назад",
+                callback_data=f"back_to_subjects:{faculty_id}"
+            )
+        )
 
-    async def build_semesters_menu(self, faculty: str, subject: str, material_type: str, language: str) -> InlineKeyboardMarkup:
-        """
-        Строит меню выбора семестра на основе доступных папок.
+        self.cache[cache_key] = keyboard
+        return keyboard
 
-        Args:
-            faculty (str): Код факультета.
-            subject (str): Название предмета.
-            material_type (str): Тип материала.
-            language (str): Код языка пользователя.
+    async def build_semesters_menu(
+            self,
+            faculty_id: str,
+            subject_id: str,
+            material_type: str
+    ) -> InlineKeyboardMarkup:
+        """Строит меню выбора семестра"""
+        cache_key = f"semesters_menu:{faculty_id}:{subject_id}:{material_type}"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
 
-        Returns:
-            InlineKeyboardMarkup: Клавиатура с семестрами.
-        """
-        semesters = await self.file_system_service.get_semesters(faculty, subject, material_type)
-        keyboard = []
+        keyboard = InlineKeyboardMarkup(row_width=2)
+        semesters = await self.file_manager.get_semesters(
+            faculty_id, subject_id, material_type
+        )
 
-        # Сортируем семестры по номеру
-        try:
-            sorted_semesters = sorted(semesters, key=lambda x: int(x.replace("semester", "")))
-        except (ValueError, AttributeError):
-            sorted_semesters = semesters
-
-        # Группируем кнопки по две в строке
-        for i in range(0, len(sorted_semesters), 2):
-            row = []
-
-            # Добавляем первую кнопку в строку
-            semester = sorted_semesters[i]
-            button_text = self.semester_names.get(semester, {}).get(language, semester)
-            row.append(
+        for semester in semesters:
+            keyboard.insert(
                 InlineKeyboardButton(
-                    text=button_text,
-                    callback_data=f"semester_{material_type}_{semester}"
+                    text=f"Семестр {semester}",
+                    callback_data=f"semester:{faculty_id}:{subject_id}:{material_type}:{semester}"
                 )
             )
 
-            # Добавляем вторую кнопку, если она есть
-            if i + 1 < len(sorted_semesters):
-                semester = sorted_semesters[i + 1]
-                button_text = self.semester_names.get(semester, {}).get(language, semester)
-                row.append(
-                    InlineKeyboardButton(
-                        text=button_text,
-                        callback_data=f"semester_{material_type}_{semester}"
-                    )
-                )
-
-            keyboard.append(row)
-
-        # Добавляем кнопку возврата
-        keyboard.append([
+        keyboard.row(
             InlineKeyboardButton(
-                text=get_text(language, "back_button"),
-                callback_data="back_to_material_types"
+                text="← Назад",
+                callback_data=f"back_to_materials:{faculty_id}:{subject_id}"
             )
-        ])
+        )
 
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+        self.cache[cache_key] = keyboard
+        return keyboard
 
-    async def build_materials_menu(self, faculty: str, subject: str, material_type: str, semester: str, language: str) -> InlineKeyboardMarkup:
-        """
-        Строит меню выбора материала на основе доступных файлов.
+    async def build_files_menu(
+            self,
+            faculty_id: str,
+            subject_id: str,
+            material_type: str,
+            semester: str
+    ) -> InlineKeyboardMarkup:
+        """Строит меню выбора файлов"""
+        cache_key = f"files_menu:{faculty_id}:{subject_id}:{material_type}:{semester}"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
 
-        Args:
-            faculty (str): Код факультета.
-            subject (str): Название предмета.
-            material_type (str): Тип материала.
-            semester (str): Семестр.
-            language (str): Код языка пользователя.
+        keyboard = InlineKeyboardMarkup(row_width=1)
+        files = await self.file_manager.get_files(
+            faculty_id, subject_id, material_type, semester
+        )
 
-        Returns:
-            InlineKeyboardMarkup: Клавиатура с материалами.
-        """
-        materials = await self.file_system_service.get_m
+        for file in files:
+            keyboard.insert(
+                InlineKeyboardButton(
+                    text=file.name,
+                    callback_data=f"file:{faculty_id}:{subject_id}:{material_type}:{semester}:{file.id}"
+                )
+            )
+
+        keyboard.row(
+            InlineKeyboardButton(
+                text="← Назад",
+                callback_data=f"back_to_semesters:{faculty_id}:{subject_id}:{material_type}"
+            )
+        )
+
+        self.cache[cache_key] = keyboard
+        return keyboard
+
+    async def clear_cache(self, key: Optional[str] = None) -> None:
+        """Очищает кэш меню"""
+        if key:
+            if key in self.cache:
+                del self.cache[key]
+        else:
+            self.cache.clear()
+        logger.info(f"Menu cache cleared {'for key: ' + key if key else 'completely'}")
