@@ -21,5 +21,15 @@
   "select_semester": "Select semester",
   "select_material": "Select material",
   "file_not_found": "File not found",
-  "error_sending_file": "Error when sending a file"
+  "error_sending_file": "Error when sending a file",
+  "faculty_not_found": "Faculty not found",
+  "deanery_button": "Dean's Office",
+  "sports_doctor_button": "Sports Doctor",
+  "anatomy_button": "Anatomy Department",
+  "libraries_button": "Libraries",
+  "pass_making_button": "Pass Issuance",
+  "practice_button": "Internship",
+  "departments_button": "Department Duty",
+  "back_to_schedule": "Back to schedule",
+  "image_not_found": "Image not found"
 }

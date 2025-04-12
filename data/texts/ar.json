@@ -8,5 +8,15 @@
   "material_info": "المادة:\nالمادة: {subject}\nالنوع: {type}\nالفصل الدراسي: {semester}\nالاسم: {name}",
   "no_materials_found": "لم يتم العثور على مواد",
   "no_subjects_found": "لم يتم العثور على مواد دراسية",
-  "no_semesters_found": "لم يتم العثور على فصول دراسية"
+  "no_semesters_found": "لم يتم العثور على فصول دراسية",
+  "faculty_not_found": "الكلية غير موجودة",
+  "deanery_button": "مكتب العميد",
+  "sports_doctor_button": "طبيب رياضي",
+  "anatomy_button": "قسم التشريح",
+  "libraries_button": "المكتبات",
+  "pass_making_button": "إصدار البطاقة",
+  "practice_button": "التدريب العملي",
+  "departments_button": "مناوبة الأقسام",
+  "back_to_schedule": "العودة إلى الجدول",
+  "image_not_found": "الصورة غير موجودة"
 }

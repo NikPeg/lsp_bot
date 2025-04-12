@@ -13,6 +13,7 @@ from app.config import get_config
 from app.handlers.start import UserStates
 from app.keyboards.learning_center_kb import get_learning_center_keyboard
 from app.keyboards.main_menu_kb import get_main_menu_keyboard
+from app.keyboards.faculty_kb import get_faculty_keyboard
 from app.keyboards.schedule_kb import get_schedule_keyboard
 from app.services.user_activity import UserActivityTracker
 from app.utils.helpers import get_text
@@ -106,7 +107,7 @@ async def process_profile(callback: CallbackQuery, state: FSMContext):
     # Редактируем сообщение с информацией о личном кабинете
     await callback.message.edit_text(
         profile_text,
-        reply_markup=get_faculty_selection_keyboard(language)
+        reply_markup=get_faculty_keyboard(language)
     )
 
     logger.info(f"Пользователь {user_id} перешел в личный кабинет")

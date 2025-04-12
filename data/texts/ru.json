@@ -21,5 +21,19 @@
   "select_semester": "Выберите семестр",
   "select_material": "Выберите материал",
   "file_not_found": "Файл не найден",
-  "error_sending_file": "Ошибка при отправке файла"
+  "error_sending_file": "Ошибка при отправке файла",
+  "learning_center_text": "Центр обучения - доступ к учебным материалам",
+  "language_settings_button": "Настройки языка",
+  "language_settings_text": "Выберите язык интерфейса:",
+  "current_language": "Текущий язык: {language}",
+  "faculty_not_found": "Факультет не найден",
+  "deanery_button": "Деканат",
+  "sports_doctor_button": "Спортивный врач",
+  "anatomy_button": "Анатомичка",
+  "libraries_button": "Библиотеки",
+  "pass_making_button": "Изготовление пропуска",
+  "practice_button": "Производственная практика",
+  "departments_button": "Дежурные по кафедрам",
+  "back_to_schedule": "Вернуться к расписанию",
+  "image_not_found": "Изображение не найдено"
 }
