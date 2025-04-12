@@ -12,7 +12,7 @@ from loguru import logger
 from ..config import get_config
 from app.keyboards.language_kb import get_language_keyboard
 from app.keyboards.main_menu_kb import get_main_menu_keyboard
-from app.services.user_service import UserService
+from app.services.user_activity import UserActivityTracker
 from app.utils.helpers import get_text
 
 # Получаем конфигурацию
@@ -21,14 +21,14 @@ config = get_config()
 # Создаем роутер для команды старта и выбора языка
 start_router = Router()
 
+# Инициализация трекера активности
+user_activity = UserActivityTracker()
+
 # Состояния для FSM
 class UserStates(StatesGroup):
     """Класс состояний пользователя в боте."""
     language_selection = State()  # Состояние выбора языка
     main_menu = State()  # Состояние основного меню
-
-# Сервис для работы с данными пользователей
-user_service = UserService()
 
 # Доступные языки
 AVAILABLE_LANGUAGES = ["ru", "en", "ar"]
@@ -42,13 +42,14 @@ async def cmd_start(message: Message, state: FSMContext):
     user_id = message.from_user.id
     user_full_name = message.from_user.full_name
 
-    # Регистрируем пользователя или обновляем время последней активности
-    await user_service.register_user_activity(user_id)
+    # Регистрируем активность пользователя
+    user_activity.register_user(user_id)
+    user_activity.update_activity(user_id)
 
     logger.info(f"Пользователь {user_id} ({user_full_name}) запустил бота")
 
     # Получаем текущий язык пользователя или устанавливаем по умолчанию
-    current_language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
+    current_language = user_activity.get_user_activity(user_id).get('language', config.LANGUAGE_DEFAULT)
 
     # Устанавливаем состояние выбора языка
     await state.set_state(UserStates.language_selection)
@@ -80,8 +81,11 @@ async def process_language_selection(callback: CallbackQuery, state: FSMContext)
         await callback.answer("Язык не поддерживается / Language is not supported / اللغة غير مدعومة")
         return
 
-    # Сохраняем выбранный язык
-    await user_service.set_user_language(user_id, selected_language)
+    # Обновляем активность и сохраняем язык пользователя
+    user_activity.update_activity(user_id)
+    user_data = user_activity.get_user_activity(user_id)
+    user_data['language'] = selected_language
+    user_activity._save_data()  # Сохраняем изменения
 
     # Устанавливаем состояние основного меню
     await state.set_state(UserStates.main_menu)
@@ -107,14 +111,14 @@ async def cmd_change_language(message: Message, state: FSMContext):
     """
     user_id = message.from_user.id
 
-    # Обновляем время последней активности
-    await user_service.register_user_activity(user_id)
+    # Обновляем активность пользователя
+    user_activity.update_activity(user_id)
 
     # Устанавливаем состояние выбора языка
     await state.set_state(UserStates.language_selection)
 
     # Получаем текущий язык пользователя
-    current_language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
+    current_language = user_activity.get_user_activity(user_id).get('language', config.LANGUAGE_DEFAULT)
 
     # Получаем текст на текущем языке
     language_selection_text = get_text(current_language, "language_selection")
