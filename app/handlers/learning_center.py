@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from loguru import logger
 
-from app.config import settings
+from app.config import get_config
 from app.handlers.start import UserStates
 from app.keyboards.learning_center_kb import get_learning_center_keyboard
 from app.keyboards.main_menu_kb import get_main_menu_keyboard
@@ -23,6 +23,8 @@ learning_center_router = Router()
 # Сервисы для работы с пользователями и файловой системой
 user_service = UserService()
 file_system_service = FileSystemService()
+
+config = get_config()
 
 
 @learning_center_router.callback_query(F.data == "learning_center")
@@ -40,7 +42,7 @@ async def show_learning_center(callback: CallbackQuery, state: FSMContext):
     await user_service.register_user_activity(user_id)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем текст для центра обучения
     learning_center_text = get_text(language, "learning_center_text")
@@ -72,7 +74,7 @@ async def show_study_center(callback: CallbackQuery, state: FSMContext):
     await user_service.register_user_activity(user_id)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем выбранный факультет пользователя
     faculty = await user_service.get_user_faculty(user_id)
@@ -136,7 +138,7 @@ async def process_subject_selection(callback: CallbackQuery, state: FSMContext):
     await state.update_data(selected_subject=subject_name)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем выбранный факультет пользователя
     faculty = await user_service.get_user_faculty(user_id)
@@ -197,7 +199,7 @@ async def process_material_type_selection(callback: CallbackQuery, state: FSMCon
     await state.update_data(selected_material_type=material_type)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем выбранный факультет пользователя
     faculty = await user_service.get_user_faculty(user_id)
@@ -259,7 +261,7 @@ async def process_semester_selection(callback: CallbackQuery, state: FSMContext)
     await state.update_data(selected_semester=semester)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем выбранный факультет пользователя
     faculty = await user_service.get_user_faculty(user_id)
@@ -319,7 +321,7 @@ async def send_material(callback: CallbackQuery, state: FSMContext):
     semester = state_data.get("selected_semester")
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем выбранный факультет пользователя
     faculty = await user_service.get_user_faculty(user_id)
@@ -411,7 +413,7 @@ async def show_language_settings(callback: CallbackQuery, state: FSMContext):
     await user_service.register_user_activity(user_id)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем текст для выбора языка
     language_settings_text = get_text(language, "language_settings_text")
@@ -446,7 +448,7 @@ async def hide_learning_center(callback: CallbackQuery, state: FSMContext):
     await user_service.register_user_activity(user_id)
 
     # Получаем язык пользователя
-    language = await user_service.get_user_language(user_id) or settings.LANGUAGE_DEFAULT
+    language = await user_service.get_user_language(user_id) or config.LANGUAGE_DEFAULT
 
     # Получаем текст для главного меню
     main_menu_text = get_text(language, "main_menu_text")
