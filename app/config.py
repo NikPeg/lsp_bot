@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     CHANNEL_LINK: HttpUrl = Field(..., env="CHANNEL_LINK")
     MATERIALS_FOLDER: Path = Field(..., env="MATERIALS_FOLDER")
     LANGUAGE_DEFAULT: str = Field("ru", env="LANGUAGE_DEFAULT")
+    IMAGES_FOLDER: str = Field(..., env="IMAGES_FOLDER")
 
     # Валидация и преобразование значений
     @validator("MATERIALS_FOLDER", pre=True)
