@@ -31,5 +31,11 @@
   "practice_button": "Internship",
   "departments_button": "Department Duty",
   "back_to_schedule": "Back to schedule",
-  "image_not_found": "Image not found"
+  "image_not_found": "Image not found",
+  "faculty_L_name": "Faculty of Medicine",
+  "faculty_S_name": "Faculty of Dentistry",
+  "faculty_P_name": "Faculty of Pediatrics",
+  "profile_text": "Profile. Select faculty:",
+  "please_select_faculty": "Please select a faculty in your profile first",
+  "channel_text": "Join our channel: {channel_link}"
 }
