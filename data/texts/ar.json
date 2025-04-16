@@ -34,5 +34,9 @@
   "libraries_schedule_text": "جدول المكتبات",
   "practice_schedule_text": "جدول التدريب العملي",
   "open_channel_button": "فتح القناة",
-  "error_occurred": "حدث خطأ"
+  "error_occurred": "حدث خطأ",
+  "faculty_selected": "تم اختيار الكلية: {faculty}",
+  "select_faculty": "اختر كلية",
+  "current_faculty": "الكلية الحالية: {faculty}",
+  "no_faculty_selected": "لم يتم اختيار كلية"
 }

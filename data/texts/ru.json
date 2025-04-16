@@ -51,5 +51,10 @@
   "libraries_schedule_text": "Расписание работы библиотек",
   "practice_schedule_text": "Расписание производственной практики",
   "open_channel_button": "Открыть канал",
-  "error_occurred": "Произошла ошибка"
+  "error_occurred": "Произошла ошибка",
+  "faculty_selected": "Факультет выбран: {faculty}",
+  "current_faculty": "Текущий факультет: {faculty}",
+  "no_faculty_selected": "Факультет не выбран",
+  "faculty_settings_text": "Настройки факультета:",
+  "change_faculty": "Сменить факультет"
 }

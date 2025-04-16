@@ -27,7 +27,7 @@ def get_learning_center_keyboard(language: str) -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text=get_text(language, "faculty_settings_button"),
-                callback_data="faculty_settings"
+                callback_data="settings_faculty"
             )
         ],
         [

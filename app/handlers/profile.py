@@ -111,6 +111,18 @@ async def process_faculty_selection(callback: CallbackQuery, state: FSMContext):
 
     logger.info(f"Пользователь {user_id} выбрал факультет: {selected_faculty}")
 
+@profile_router.callback_query(F.data == "settings_faculty")
+async def show_faculty_settings(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    user_data = user_activity.get_user_activity(user_id)
+    language = user_data.get('language', config.LANGUAGE_DEFAULT)
+
+    await callback.answer()
+    await callback.message.edit_text(
+        get_text(language, "faculty_settings_text"),
+        reply_markup=get_faculty_keyboard(language)
+    )
+
 @profile_router.message(Command("profile"))
 async def cmd_profile(message: Message, state: FSMContext):
     """

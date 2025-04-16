@@ -47,5 +47,8 @@
   "libraries_schedule_text": "Libraries schedule",
   "practice_schedule_text": "Internship schedule",
   "open_channel_button": "Open Channel",
-  "error_occurred": "An error occurred"
+  "error_occurred": "An error occurred",
+  "faculty_selected": "Faculty selected: {faculty}",
+  "current_faculty": "Current faculty: {faculty}",
+  "no_faculty_selected": "No faculty selected"
 }
