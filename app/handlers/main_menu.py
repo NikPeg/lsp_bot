@@ -8,6 +8,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from loguru import logger
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from app.config import get_config
 from app.handlers.start import UserStates
@@ -168,21 +169,34 @@ async def process_schedule(callback: CallbackQuery, state: FSMContext):
 
 @main_menu_router.callback_query(F.data == "channel")
 async def process_channel(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик кнопки 'Наш канал'.
-    """
+    """Обработчик кнопки 'Наш канал'."""
     user_id = callback.from_user.id
-
-    # Обновляем активность пользователя
     user_activity.update_activity(user_id)
 
-    # Получаем язык пользователя
-    language = user_activity.get_user_activity(user_id).get('language', config.LANGUAGE_DEFAULT)
+    user_data = user_activity.get_user_activity(user_id)
+    language = user_data.get('language', config.LANGUAGE_DEFAULT)
 
-    # Получаем текст для сообщения о канале
-    channel_text = get_text(language, "channel_text").format(channel_link=config.CHANNEL_LINK)
+    try:
+        # 1. Сначала отвечаем на callback
+        await callback.answer()
 
-    # Отвечаем на callback и перенаправляем на канал
-    await callback.answer("Переход на канал", url=config.CHANNEL_LINK)
+        # 2. Затем отправляем сообщение с кнопкой
+        await callback.message.answer(
+            get_text(language, "channel_text").format(channel_link=str(config.CHANNEL_LINK)),
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=get_text(language, "open_channel_button"),
+                            url=str(config.CHANNEL_LINK)  # Преобразуем URL в строку
+                        )
+                    ]
+                ]
+            )
+        )
 
-    logger.info(f"Пользователь {user_id} перешел на канал")
+        logger.info(f"User {user_id} requested channel link")
+    except Exception as e:
+        logger.error(f"Error processing channel request: {e}")
+        await callback.answer(get_text(language, "error_occurred"))
+

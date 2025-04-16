@@ -49,5 +49,7 @@
   "sports_doctor_schedule_text": "Расписание спортивного врача",
   "anatomy_schedule_text": "Расписание анатомички",
   "libraries_schedule_text": "Расписание работы библиотек",
-  "practice_schedule_text": "Расписание производственной практики"
+  "practice_schedule_text": "Расписание производственной практики",
+  "open_channel_button": "Открыть канал",
+  "error_occurred": "Произошла ошибка"
 }

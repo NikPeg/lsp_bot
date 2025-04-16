@@ -45,5 +45,7 @@
   "sports_doctor_schedule_text": "Sports doctor schedule",
   "anatomy_schedule_text": "Anatomy department schedule",
   "libraries_schedule_text": "Libraries schedule",
-  "practice_schedule_text": "Internship schedule"
+  "practice_schedule_text": "Internship schedule",
+  "open_channel_button": "Open Channel",
+  "error_occurred": "An error occurred"
 }

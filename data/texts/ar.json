@@ -32,5 +32,7 @@
   "sports_doctor_schedule_text": "جدول الطبيب الرياضي",
   "anatomy_schedule_text": "جدول قسم التشريح",
   "libraries_schedule_text": "جدول المكتبات",
-  "practice_schedule_text": "جدول التدريب العملي"
+  "practice_schedule_text": "جدول التدريب العملي",
+  "open_channel_button": "فتح القناة",
+  "error_occurred": "حدث خطأ"
 }
