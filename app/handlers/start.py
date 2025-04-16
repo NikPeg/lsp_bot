@@ -67,6 +67,27 @@ async def cmd_start(message: Message, state: FSMContext):
         reply_markup=get_language_keyboard()
     )
 
+@start_router.callback_query(F.data == "language_settings")
+async def handle_language_settings(callback: CallbackQuery, state: FSMContext):
+    """
+    Обработчик кнопки смены языка в настройках
+    """
+    user_id = callback.from_user.id
+    user_activity.update_activity(user_id)
+
+    user_data = user_activity.get_user_activity(user_id)
+    current_language = user_data.get('language', config.LANGUAGE_DEFAULT)
+
+    # Получаем текст на текущем языке
+    language_selection_text = get_text(current_language, "language_settings_text")
+
+    await callback.answer()
+    await callback.message.edit_text(
+        language_selection_text,
+        reply_markup=get_language_keyboard()
+    )
+    logger.info(f"User {user_id} opened language settings")
+
 @start_router.callback_query(F.data.startswith("language_"))
 async def process_language_selection(callback: CallbackQuery, state: FSMContext):
     """
