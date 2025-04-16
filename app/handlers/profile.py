@@ -84,6 +84,7 @@ async def process_faculty_selection(callback: CallbackQuery, state: FSMContext):
     """
     user_id = callback.from_user.id
     selected_faculty = callback.data.split('_')[1]
+    logger.debug(f"Selected faculty: {selected_faculty}")
 
     # Проверяем существование факультета
     faculties = await file_manager.get_faculties()

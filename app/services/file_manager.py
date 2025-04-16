@@ -46,7 +46,7 @@ class FileManager:
         try:
             for dir_name in os.listdir(self.base_path):
                 if dir_name.startswith("faculty_"):
-                    faculty_id = dir_name.split("_")[1].lower()
+                    faculty_id = dir_name.split("_")[1].upper()
                     faculties.append(
                         Faculty(
                             id=faculty_id,
