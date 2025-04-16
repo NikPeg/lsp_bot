@@ -7,6 +7,7 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InputFile
+from aiogram.types import FSInputFile
 from loguru import logger
 from pathlib import Path
 
@@ -116,8 +117,7 @@ async def show_schedule_image(callback: CallbackQuery, image_filename: str, text
         return
 
     try:
-        # Создаем InputFile правильно
-        photo = InputFile(image_path)
+        photo = FSInputFile(str(image_path))
 
         await callback.message.answer_photo(
             photo=photo,
