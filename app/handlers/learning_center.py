@@ -99,7 +99,22 @@ async def show_study_center(callback: CallbackQuery, state: FSMContext):
         return
 
     subjects = await file_manager.get_subjects(faculty)
+
+    logger.debug(f"Requested subjects for faculty: {faculty}")
+    logger.debug(f"Found subjects: {[s.id for s in subjects] if subjects else 'None'}")
+    logger.debug(f"Faculty path: {file_manager.base_path / f'faculty_{faculty}'}")
+
     if not subjects:
+        logger.error(f"No subjects found for faculty {faculty}. Checking directory structure...")
+
+        # Проверка существования папки факультета
+        faculty_path = file_manager.base_path / f"faculty_{faculty}"
+        if not faculty_path.exists():
+            logger.error(f"Faculty directory does not exist: {faculty_path}")
+        else:
+            import os
+            logger.debug(f"Faculty directory content: {os.listdir(faculty_path)}")
+
         await callback.answer(get_text(language, "no_subjects_found"))
         await callback.message.edit_text(
             get_text(language, "no_subjects_found"),

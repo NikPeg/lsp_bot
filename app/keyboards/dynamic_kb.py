@@ -16,47 +16,31 @@ def get_subjects_keyboard(subjects: list, language: str) -> InlineKeyboardMarkup
     Создает клавиатуру для выбора предмета.
 
     Args:
-        subjects (list): Список доступных предметов.
-        language (str): Код языка пользователя.
+        subjects: Список объектов Subject
+        language: Язык пользователя
 
     Returns:
-        InlineKeyboardMarkup: Клавиатура с предметами.
+        InlineKeyboardMarkup: Клавиатура с предметами
     """
-    keyboard = []
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
 
-    # Группируем кнопки по две в строке
-    for i in range(0, len(subjects), 2):
-        row = []
-        # Добавляем первую кнопку в строку
-        subject = subjects[i]
-        row.append(
+    for subject in subjects:
+        keyboard.inline_keyboard.append([
             InlineKeyboardButton(
-                text=subject,
-                callback_data=f"subject_{subject}"
+                text=subject.name,  # Используем name вместо объекта Subject
+                callback_data=f"subject_{subject.id}"  # Используем id предмета
             )
-        )
+        ])
 
-        # Добавляем вторую кнопку, если она есть
-        if i + 1 < len(subjects):
-            subject = subjects[i + 1]
-            row.append(
-                InlineKeyboardButton(
-                    text=subject,
-                    callback_data=f"subject_{subject}"
-                )
-            )
-
-        keyboard.append(row)
-
-    # Добавляем кнопку возврата
-    keyboard.append([
+    # Добавляем кнопку "Назад"
+    keyboard.inline_keyboard.append([
         InlineKeyboardButton(
             text=get_text(language, "back_button"),
-            callback_data="learning_center"
+            callback_data="back_to_learning_center"
         )
     ])
 
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+    return keyboard
 
 
 def get_material_types_keyboard(material_types: list, language: str) -> InlineKeyboardMarkup:
