@@ -24,5 +24,13 @@
   "faculty_P_name": "كلية طب الأطفال",
   "profile_text": "الحساب الشخصي. اختر الكلية:",
   "please_select_faculty": "الرجاء اختيار الكلية أولاً في حسابك الشخصي",
-  "channel_text": "انضم إلى قناتنا: {channel_link}"
+  "channel_text": "انضم إلى قناتنا: {channel_link}",
+  "departments_schedule_text": "جدول مناوبة الأقسام",
+  "pass_making_schedule_text": "جدول إصدار البطاقات",
+  "error_sending_image": "خطأ في إرسال الصورة",
+  "deanery_schedule_text": "جدول مكتب العميد",
+  "sports_doctor_schedule_text": "جدول الطبيب الرياضي",
+  "anatomy_schedule_text": "جدول قسم التشريح",
+  "libraries_schedule_text": "جدول المكتبات",
+  "practice_schedule_text": "جدول التدريب العملي"
 }

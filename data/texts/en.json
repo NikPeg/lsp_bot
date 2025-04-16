@@ -37,5 +37,13 @@
   "faculty_P_name": "Faculty of Pediatrics",
   "profile_text": "Profile. Select faculty:",
   "please_select_faculty": "Please select a faculty in your profile first",
-  "channel_text": "Join our channel: {channel_link}"
+  "channel_text": "Join our channel: {channel_link}",
+  "departments_schedule_text": "Department duty schedule",
+  "pass_making_schedule_text": "Pass issuance schedule",
+  "error_sending_image": "Error sending image",
+  "deanery_schedule_text": "Dean's office schedule",
+  "sports_doctor_schedule_text": "Sports doctor schedule",
+  "anatomy_schedule_text": "Anatomy department schedule",
+  "libraries_schedule_text": "Libraries schedule",
+  "practice_schedule_text": "Internship schedule"
 }

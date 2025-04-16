@@ -28,31 +28,31 @@ user_activity = UserActivityTracker()
 # Список доступных расписаний
 SCHEDULE_TYPES = {
     "deanery": {
-        "image": "deanery.jpg",
+        "image": "deanery.png",
         "text_key": "deanery_schedule_text"
     },
     "sports_doctor": {
-        "image": "sports_doctor.jpg",
+        "image": "sports_doctor.png",
         "text_key": "sports_doctor_schedule_text"
     },
     "anatomy": {
-        "image": "anatomy.jpg",
+        "image": "anatomy.png",
         "text_key": "anatomy_schedule_text"
     },
     "libraries": {
-        "image": "libraries.jpg",
+        "image": "libraries.png",
         "text_key": "libraries_schedule_text"
     },
     "pass_making": {
-        "image": "pass_making.jpg",
+        "image": "pass_making.png",
         "text_key": "pass_making_schedule_text"
     },
     "practice": {
-        "image": "practice.jpg",
+        "image": "practice.png",
         "text_key": "practice_schedule_text"
     },
     "departments": {
-        "image": "departments.jpg",
+        "image": "departments.png",
         "text_key": "departments_schedule_text"
     }
 }
@@ -93,6 +93,7 @@ async def handle_schedule_selection(callback: CallbackQuery, state: FSMContext):
         SCHEDULE_TYPES[schedule_type]["text_key"]
     )
 
+
 async def show_schedule_image(callback: CallbackQuery, image_filename: str, text_key: str):
     """Отправляет изображение с расписанием."""
     user_id = callback.from_user.id
@@ -115,14 +116,16 @@ async def show_schedule_image(callback: CallbackQuery, image_filename: str, text
         return
 
     try:
-        # Отправляем изображение
+        # Создаем InputFile правильно
+        photo = InputFile(image_path)
+
         await callback.message.answer_photo(
-            photo=InputFile(image_path),
+            photo=photo,
             caption=schedule_description,
             protect_content=True
         )
 
-        # Отправляем кнопку для возврата
+        # Кнопка возврата
         await callback.message.answer(
             get_text(language, "back_to_schedule"),
             reply_markup=get_schedule_keyboard(language)
@@ -135,6 +138,7 @@ async def show_schedule_image(callback: CallbackQuery, image_filename: str, text
             get_text(language, "error_sending_image"),
             reply_markup=get_schedule_keyboard(language)
         )
+
 
 @schedule_router.callback_query(F.data == "schedule_back")
 async def schedule_back_to_main(callback: CallbackQuery, state: FSMContext):
