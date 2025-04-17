@@ -50,5 +50,6 @@
   "error_occurred": "An error occurred",
   "faculty_selected": "Faculty selected: {faculty}",
   "current_faculty": "Current faculty: {faculty}",
-  "no_faculty_selected": "No faculty selected"
+  "no_faculty_selected": "No faculty selected",
+  "no_materials_found_in_semester": "No materials found for selected semester"
 }

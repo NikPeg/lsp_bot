@@ -38,5 +38,6 @@
   "faculty_selected": "تم اختيار الكلية: {faculty}",
   "select_faculty": "اختر كلية",
   "current_faculty": "الكلية الحالية: {faculty}",
-  "no_faculty_selected": "لم يتم اختيار كلية"
+  "no_faculty_selected": "لم يتم اختيار كلية",
+  "no_materials_found_in_semester": "لم يتم العثور على مواد للفصل الدراسي المحدد"
 }

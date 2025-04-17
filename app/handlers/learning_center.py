@@ -179,7 +179,7 @@ async def process_material_type_selection(callback: CallbackQuery, state: FSMCon
     await callback.answer()
     await callback.message.edit_text(
         get_text(language, "select_semester"),
-        reply_markup=get_semester_keyboard(semesters, language)
+        reply_markup=get_semesters_keyboard(material_type, semesters, language)  # Added material_type
     )
     logger.info(f"User {user_id} selected material type: {material_type}")
 
@@ -333,10 +333,10 @@ def get_material_type_keyboard(material_types: list, language: str):
     from app.keyboards.dynamic_kb import get_material_types_keyboard
     return get_material_types_keyboard(material_types, language)
 
-def get_semester_keyboard(semesters: list, language: str):
+def get_semesters_keyboard(material_type: str, semesters: list, language: str):
     """Генерация клавиатуры выбора семестра."""
     from app.keyboards.dynamic_kb import get_semesters_keyboard
-    return get_semesters_keyboard(semesters, language)
+    return get_semesters_keyboard(material_type, semesters, language)
 
 def get_materials_keyboard(materials: list, language: str):
     """Генерация клавиатуры выбора материала."""
