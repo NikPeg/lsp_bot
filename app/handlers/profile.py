@@ -104,7 +104,9 @@ async def process_faculty_selection(callback: CallbackQuery, state: FSMContext):
 
     # Формируем ответ
     await callback.answer()
-    await callback.message.edit_text(
+    await callback.answer()
+    await callback.message.delete()  # Delete the current message
+    await callback.message.answer(   # Send a new message
         get_text(language, "faculty_selected").format(faculty=faculty_name),
         reply_markup=get_main_menu_keyboard(language)
     )
