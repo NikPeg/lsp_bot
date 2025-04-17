@@ -9,8 +9,6 @@ data/users/.json
 data/users/.db
 
 # Учебные материалы (они должны добавляться отдельно)
-data/materials/
-data/materials/**/*
 
 # Кэш Python
 pycache/
