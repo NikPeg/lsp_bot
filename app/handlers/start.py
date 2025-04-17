@@ -117,8 +117,11 @@ async def process_language_selection(callback: CallbackQuery, state: FSMContext)
     # Отвечаем на callback, чтобы убрать индикатор загрузки
     await callback.answer()
 
-    # Редактируем сообщение, показывая основное меню
-    await callback.message.edit_text(
+    # Сначала удаляем сообщение с выбором языка
+    await callback.message.delete()
+
+    # Отправляем новое сообщение с клавиатурой основного меню
+    await callback.message.answer(
         welcome_text,
         reply_markup=get_main_menu_keyboard(selected_language)
     )
