@@ -55,12 +55,19 @@ async def learning_handler(message: Message, user_language: str = DEFAULT_LANGUA
         reply_markup=keyboard
     )
 
-@router.callback_query(F.data.startswith("navigate:"))
+@router.callback_query(F.data.startswith("nav:"))
 async def navigate_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик навигации по папкам с материалами
     """
-    path = callback_query.data.split(":")[1]
+    # Получаем идентификатор пути и восстанавливаем полный путь
+    path_id = callback_query.data.split(":")[1]
+    from keyboards.learning_kb import get_path_by_id
+    path = get_path_by_id(path_id)
+
+    if not path:
+        await callback_query.answer("Путь не найден", show_alert=True)
+        return
 
     # Получаем родительский путь
     parent_path = get_parent_path(path)
@@ -94,12 +101,19 @@ async def navigate_callback(callback_query: CallbackQuery, user_language: str = 
         reply_markup=keyboard
     )
 
-@router.callback_query(F.data.startswith("download:"))
+@router.callback_query(F.data.startswith("dl:"))
 async def download_file_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик скачивания файла
     """
-    file_path = callback_query.data.split(":")[1]
+    # Получаем идентификатор пути и восстанавливаем полный путь к файлу
+    path_id = callback_query.data.split(":")[1]
+    from keyboards.learning_kb import get_path_by_id
+    file_path = get_path_by_id(path_id)
+
+    if not file_path:
+        await callback_query.answer("Файл не найден", show_alert=True)
+        return
 
     # Проверяем существование файла
     if not await check_file_exists(file_path):
