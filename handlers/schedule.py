@@ -1,5 +1,5 @@
-from aiogram import Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 import os
 
 from keyboards.schedule_kb import get_schedule_keyboard
@@ -10,7 +10,11 @@ from utils.emoji import add_emoji_to_text
 
 from config import IMAGES_FOLDER
 
-async def schedule_handler(message: types.Message):
+# Создаем роутер для обработчиков расписания
+router = Router()
+
+@router.message(F.text.startswith("📆"))
+async def schedule_handler(message: Message):
     """
     Обработчик нажатия на кнопку "Расписание"
     """
@@ -28,12 +32,13 @@ async def schedule_handler(message: types.Message):
         reply_markup=keyboard
     )
 
-async def schedule_type_callback(callback_query: types.CallbackQuery, callback_data: dict):
+@router.callback_query(F.data.startswith("schedule:"))
+async def schedule_type_callback(callback_query: CallbackQuery):
     """
     Обработчик выбора типа расписания
     """
     user_language = callback_query.data.get('user_language', 'ru')
-    schedule_type = callback_data["value"]
+    schedule_type = callback_query.data.split(":")[1]
 
     # Формируем путь к изображению
     image_path = os.path.join(IMAGES_FOLDER, f"{schedule_type}.png")
@@ -73,7 +78,8 @@ async def schedule_type_callback(callback_query: types.CallbackQuery, callback_d
             reply_markup=get_back_keyboard(user_language, "back_to_schedule")
         )
 
-async def back_to_schedule_callback(callback_query: types.CallbackQuery):
+@router.callback_query(F.data == "back_to_schedule")
+async def back_to_schedule_callback(callback_query: CallbackQuery):
     """
     Обработчик возврата к выбору типа расписания
     """
@@ -92,22 +98,8 @@ async def back_to_schedule_callback(callback_query: types.CallbackQuery):
         reply_markup=keyboard
     )
 
-def register_schedule_handlers(dp: Dispatcher):
+def setup_schedule_handlers(dp):
     """
     Регистрирует обработчики для раздела с расписанием
     """
-    dp.register_message_handler(
-        schedule_handler,
-        lambda message: message.text.startswith("📆")
-    )
-
-    dp.register_callback_query_handler(
-        schedule_type_callback,
-        lambda c: c.data.startswith("schedule:"),
-        lambda c: {"value": c.data.split(":")[1]}
-    )
-
-    dp.register_callback_query_handler(
-        back_to_schedule_callback,
-        lambda c: c.data == "back_to_schedule"
-    )
+    dp.include_router(router)

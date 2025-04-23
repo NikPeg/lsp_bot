@@ -1,5 +1,5 @@
-from aiogram import Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 import os
 
 from keyboards.learning_kb import get_navigation_keyboard
@@ -15,7 +15,11 @@ from utils.emoji import add_emoji_to_text
 
 from config import MATERIALS_FOLDER
 
-async def learning_handler(message: types.Message):
+# Создаем роутер для обработчиков центра обучения
+router = Router()
+
+@router.message(F.text.startswith("📚"))
+async def learning_handler(message: Message):
     """
     Обработчик нажатия на кнопку "Центр обучения"
     """
@@ -29,7 +33,9 @@ async def learning_handler(message: types.Message):
         # Если факультет не выбран, предлагаем пользователю сначала выбрать факультет
         text = get_text(user_language, "please_select_faculty")
         await message.answer(text)
-        return await message.forward(lambda: profile_handler(message))
+        # Перенаправление на профиль для выбора факультета
+        from handlers.profile import profile_handler
+        return await profile_handler(message)
 
     # Формируем путь к материалам факультета
     faculty_path = os.path.join(MATERIALS_FOLDER, faculty)
@@ -50,12 +56,13 @@ async def learning_handler(message: types.Message):
         reply_markup=keyboard
     )
 
-async def navigate_callback(callback_query: types.CallbackQuery, callback_data: dict):
+@router.callback_query(F.data.startswith("navigate:"))
+async def navigate_callback(callback_query: CallbackQuery):
     """
     Обработчик навигации по папкам с материалами
     """
     user_language = callback_query.data.get('user_language', 'ru')
-    path = callback_data["value"]
+    path = callback_query.data.split(":")[1]
 
     # Получаем родительский путь
     parent_path = get_parent_path(path)
@@ -89,12 +96,13 @@ async def navigate_callback(callback_query: types.CallbackQuery, callback_data: 
         reply_markup=keyboard
     )
 
-async def download_file_callback(callback_query: types.CallbackQuery, callback_data: dict):
+@router.callback_query(F.data.startswith("download:"))
+async def download_file_callback(callback_query: CallbackQuery):
     """
     Обработчик скачивания файла
     """
     user_language = callback_query.data.get('user_language', 'ru')
-    file_path = callback_data["value"]
+    file_path = callback_query.data.split(":")[1]
 
     # Проверяем существование файла
     if not await check_file_exists(file_path):
@@ -133,7 +141,8 @@ async def download_file_callback(callback_query: types.CallbackQuery, callback_d
             reply_markup=get_back_keyboard(user_language, "back_to_materials")
         )
 
-async def back_to_materials_callback(callback_query: types.CallbackQuery):
+@router.callback_query(F.data == "back_to_materials")
+async def back_to_materials_callback(callback_query: CallbackQuery):
     """
     Обработчик возврата к материалам после скачивания файла
     """
@@ -146,7 +155,8 @@ async def back_to_materials_callback(callback_query: types.CallbackQuery):
     if not faculty:
         # Если факультет не выбран, возвращаемся в главное меню
         await callback_query.answer()
-        return await callback_query.forward(lambda: back_to_main_callback(callback_query))
+        from handlers.main_menu import back_to_main_callback
+        return await back_to_main_callback(callback_query)
 
     # Формируем путь к материалам факультета
     faculty_path = os.path.join(MATERIALS_FOLDER, faculty)
@@ -168,28 +178,8 @@ async def back_to_materials_callback(callback_query: types.CallbackQuery):
         reply_markup=keyboard
     )
 
-def register_learning_handlers(dp: Dispatcher):
+def setup_learning_handlers(dp):
     """
     Регистрирует обработчики для центра обучения
     """
-    dp.register_message_handler(
-        learning_handler,
-        lambda message: message.text.startswith("📚")
-    )
-
-    dp.register_callback_query_handler(
-        navigate_callback,
-        lambda c: c.data.startswith("navigate:"),
-        lambda c: {"value": c.data.split(":")[1]}
-    )
-
-    dp.register_callback_query_handler(
-        download_file_callback,
-        lambda c: c.data.startswith("download:"),
-        lambda c: {"value": c.data.split(":")[1]}
-    )
-
-    dp.register_callback_query_handler(
-        back_to_materials_callback,
-        lambda c: c.data == "back_to_materials"
-    )
+    dp.include_router(router)

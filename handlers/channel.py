@@ -1,5 +1,5 @@
-from aiogram import Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 
 from keyboards.inline_kb import get_channel_keyboard
 from services.text_manager import get_text
@@ -7,7 +7,11 @@ from utils.emoji import add_emoji_to_text
 
 from config import CHANNEL_LINK
 
-async def channel_handler(message: types.Message):
+# Создаем роутер для обработчиков канала
+router = Router()
+
+@router.message(F.text.startswith("📢"))
+async def channel_handler(message: Message):
     """
     Обработчик нажатия на кнопку "Наш канал"
     """
@@ -26,11 +30,8 @@ async def channel_handler(message: types.Message):
         disable_web_page_preview=False  # Разрешаем предпросмотр ссылки
     )
 
-def register_channel_handlers(dp: Dispatcher):
+def setup_channel_handlers(dp):
     """
     Регистрирует обработчики для раздела "Наш канал"
     """
-    dp.register_message_handler(
-        channel_handler,
-        lambda message: message.text.startswith("📢")
-    )
+    dp.include_router(router)

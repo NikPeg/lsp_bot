@@ -1,5 +1,6 @@
-from aiogram import Dispatcher, types
-from aiogram.dispatcher.filters import Command
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
+from aiogram.filters import Command
 
 from keyboards.language_kb import get_language_keyboard
 from keyboards.main_kb import get_main_keyboard
@@ -7,7 +8,11 @@ from database.db_manager import set_user_language, get_user_language
 from config import DEFAULT_LANGUAGE
 from services.text_manager import get_text
 
-async def cmd_start(message: types.Message):
+# Создаем роутер для обработчиков старта
+router = Router()
+
+@router.message(Command("start"))
+async def cmd_start(message: Message):
     """
     Обработчик команды /start - отправляет приветствие и предлагает выбрать язык
     """
@@ -19,12 +24,13 @@ async def cmd_start(message: types.Message):
         reply_markup=keyboard
     )
 
-async def language_callback(callback_query: types.CallbackQuery, callback_data: dict):
+@router.callback_query(F.data.startswith("language:"))
+async def language_callback(callback_query: CallbackQuery):
     """
     Обработчик выбора языка из инлайн-клавиатуры
     """
     # Получаем выбранный язык из callback_data
-    language_code = callback_data["value"]
+    language_code = callback_query.data.split(":")[1]
     user_id = callback_query.from_user.id
 
     # Сохраняем выбранный язык в базу данных
@@ -47,13 +53,8 @@ async def language_callback(callback_query: types.CallbackQuery, callback_data: 
         reply_markup=main_keyboard
     )
 
-def register_start_handlers(dp: Dispatcher):
+def setup_start_handlers(dp):
     """
     Регистрирует обработчики для команды старта и выбора языка
     """
-    dp.register_message_handler(cmd_start, Command("start"))
-    dp.register_callback_query_handler(
-        language_callback,
-        lambda c: c.data.startswith("language:"),
-        lambda c: {"value": c.data.split(":")[1]}
-    )
+    dp.include_router(router)

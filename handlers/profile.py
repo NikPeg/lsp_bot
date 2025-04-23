@@ -1,5 +1,5 @@
-from aiogram import Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 
 from keyboards.profile_kb import get_faculty_selection_keyboard, get_language_settings_keyboard
 from keyboards.language_kb import get_language_keyboard
@@ -12,7 +12,11 @@ from services.file_manager import get_faculties, check_faculty_exists
 
 from config import PROFILE_INSTRUCTIONS
 
-async def profile_handler(message: types.Message):
+# Создаем роутер для обработчиков профиля
+router = Router()
+
+@router.message(F.text.startswith("👤"))
+async def profile_handler(message: Message):
     """
     Обработчик нажатия на кнопку "Личный кабинет"
     """
@@ -55,13 +59,14 @@ async def profile_handler(message: types.Message):
         reply_markup=keyboard
     )
 
-async def faculty_callback(callback_query: types.CallbackQuery, callback_data: dict):
+@router.callback_query(F.data.startswith("faculty:"))
+async def faculty_callback(callback_query: CallbackQuery):
     """
     Обработчик выбора факультета
     """
     user_id = callback_query.from_user.id
     user_language = callback_query.data.get('user_language', 'ru')
-    faculty = callback_data["value"]
+    faculty = callback_query.data.split(":")[1]
 
     # Сохраняем выбранный факультет
     await set_user_faculty(user_id, faculty)
@@ -90,7 +95,8 @@ async def faculty_callback(callback_query: types.CallbackQuery, callback_data: d
         reply_markup=keyboard
     )
 
-async def open_language_settings_callback(callback_query: types.CallbackQuery):
+@router.callback_query(F.data == "open_language_settings")
+async def open_language_settings_callback(callback_query: CallbackQuery):
     """
     Обработчик открытия настроек языка
     """
@@ -115,12 +121,13 @@ async def open_language_settings_callback(callback_query: types.CallbackQuery):
         reply_markup=keyboard
     )
 
-async def change_language_callback(callback_query: types.CallbackQuery, callback_data: dict):
+@router.callback_query(F.data.startswith("change_language:"))
+async def change_language_callback(callback_query: CallbackQuery):
     """
     Обработчик изменения языка из настроек профиля
     """
     user_id = callback_query.from_user.id
-    language_code = callback_data["value"]
+    language_code = callback_query.data.split(":")[1]
 
     # Сохраняем выбранный язык
     await set_user_language(user_id, language_code)
@@ -154,7 +161,8 @@ async def change_language_callback(callback_query: types.CallbackQuery, callback
         reply_markup=main_keyboard
     )
 
-async def back_to_profile_callback(callback_query: types.CallbackQuery):
+@router.callback_query(F.data == "back_to_profile")
+async def back_to_profile_callback(callback_query: CallbackQuery):
     """
     Обработчик возврата к профилю из настроек языка
     """
@@ -198,33 +206,8 @@ async def back_to_profile_callback(callback_query: types.CallbackQuery):
         reply_markup=keyboard
     )
 
-def register_profile_handlers(dp: Dispatcher):
+def setup_profile_handlers(dp):
     """
     Регистрирует обработчики для личного кабинета
     """
-    dp.register_message_handler(
-        profile_handler,
-        lambda message: message.text.startswith("👤")
-    )
-
-    dp.register_callback_query_handler(
-        faculty_callback,
-        lambda c: c.data.startswith("faculty:"),
-        lambda c: {"value": c.data.split(":")[1]}
-    )
-
-    dp.register_callback_query_handler(
-        open_language_settings_callback,
-        lambda c: c.data == "open_language_settings"
-    )
-
-    dp.register_callback_query_handler(
-        change_language_callback,
-        lambda c: c.data.startswith("change_language:"),
-        lambda c: {"value": c.data.split(":")[1]}
-    )
-
-    dp.register_callback_query_handler(
-        back_to_profile_callback,
-        lambda c: c.data == "back_to_profile"
-    )
+    dp.include_router(router)
