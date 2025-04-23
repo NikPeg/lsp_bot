@@ -12,6 +12,7 @@ from services.file_manager import get_directories, get_files, check_file_exists
 
 from utils.helpers import get_parent_path, format_path, is_image_file
 from utils.emoji import add_emoji_to_text
+from aiogram.types import Message, CallbackQuery, FSInputFile
 
 from config import MATERIALS_FOLDER, DEFAULT_LANGUAGE
 
@@ -128,23 +129,24 @@ async def download_file_callback(callback_query: CallbackQuery, user_language: s
     file_name = os.path.basename(file_path)
 
     try:
+        # Создаем объект FSInputFile для отправки
+        file = FSInputFile(file_path)
+
         # Проверяем, является ли файл изображением
         if is_image_file(file_name):
             # Отправляем файл как фото
-            with open(file_path, 'rb') as photo:
-                await callback_query.message.answer_photo(
-                    photo=photo,
-                    caption=file_name,
-                    reply_markup=get_after_file_keyboard(user_language)
-                )
+            await callback_query.message.answer_photo(
+                photo=file,
+                caption=file_name,
+                reply_markup=get_after_file_keyboard(user_language)
+            )
         else:
             # Отправляем файл как документ
-            with open(file_path, 'rb') as document:
-                await callback_query.message.answer_document(
-                    document=document,
-                    caption=file_name,
-                    reply_markup=get_after_file_keyboard(user_language)
-                )
+            await callback_query.message.answer_document(
+                document=file,
+                caption=file_name,
+                reply_markup=get_after_file_keyboard(user_language)
+            )
     except Exception as e:
         # В случае ошибки сообщаем пользователю
         await callback_query.message.answer(
