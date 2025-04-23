@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
+from config import DEFAULT_LANGUAGE
 from keyboards.profile_kb import get_faculty_selection_keyboard, get_language_settings_keyboard
 from keyboards.language_kb import get_language_keyboard
 from keyboards.main_kb import get_main_keyboard
@@ -16,12 +17,11 @@ from config import PROFILE_INSTRUCTIONS
 router = Router()
 
 @router.message(F.text.startswith("👤"))
-async def profile_handler(message: Message):
+async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик нажатия на кнопку "Личный кабинет"
     """
     user_id = message.from_user.id
-    user_language = message.data.get('user_language', 'ru')
 
     # Получаем текущий факультет пользователя
     current_faculty = await get_user_faculty(user_id)
@@ -60,12 +60,11 @@ async def profile_handler(message: Message):
     )
 
 @router.callback_query(F.data.startswith("faculty:"))
-async def faculty_callback(callback_query: CallbackQuery):
+async def faculty_callback(callback_query: CallbackQuery, user_language: str):
     """
     Обработчик выбора факультета
     """
     user_id = callback_query.from_user.id
-    user_language = callback_query.data.get('user_language', 'ru')
     faculty = callback_query.data.split(":")[1]
 
     # Сохраняем выбранный факультет

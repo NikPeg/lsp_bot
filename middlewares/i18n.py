@@ -37,11 +37,3 @@ class I18nMiddleware(BaseMiddleware):
 
         # Продолжаем обработку события
         return await handler(event, data)
-
-def setup_middleware(dp):
-    """
-    Устанавливает middleware для диспетчера
-    """
-    # Устанавливаем middleware для всех типов сообщений
-    dp.message.middleware(I18nMiddleware())
-    dp.callback_query.middleware(I18nMiddleware())
