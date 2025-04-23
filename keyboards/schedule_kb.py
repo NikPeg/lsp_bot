@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
 
@@ -12,7 +13,8 @@ def get_schedule_keyboard(language: str) -> InlineKeyboardMarkup:
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопками типов расписаний
     """
-    keyboard = InlineKeyboardMarkup(row_width=2)
+    # Создаем билдер для клавиатуры
+    builder = InlineKeyboardBuilder()
 
     # Получаем переведенные тексты для кнопок
     deanery_text = add_emoji_to_text("🏢", get_text(language, "deanery_button"))
@@ -21,20 +23,25 @@ def get_schedule_keyboard(language: str) -> InlineKeyboardMarkup:
     pass_making_text = add_emoji_to_text("🪪", get_text(language, "pass_making_button"))
     practice_text = add_emoji_to_text("👨‍⚕️", get_text(language, "practice_button"))
 
-    # Добавляем кнопки с переведенными текстами
-    keyboard.add(
+    # Добавляем кнопки с переведенными текстами (по 2 в ряд где возможно)
+    builder.row(
         InlineKeyboardButton(text=deanery_text, callback_data="schedule:deanery"),
-        InlineKeyboardButton(text=sports_doctor_text, callback_data="schedule:sports_doctor"),
+        InlineKeyboardButton(text=sports_doctor_text, callback_data="schedule:sports_doctor")
+    )
+
+    builder.row(
         InlineKeyboardButton(text=libraries_text, callback_data="schedule:library"),
-        InlineKeyboardButton(text=pass_making_text, callback_data="schedule:pass_making"),
+        InlineKeyboardButton(text=pass_making_text, callback_data="schedule:pass_making")
+    )
+
+    builder.row(
         InlineKeyboardButton(text=practice_text, callback_data="schedule:practice")
     )
 
     # Добавляем кнопку для возврата в главное меню
     back_text = add_emoji_to_text("🔙", get_text(language, "back_to_main_menu"))
-    keyboard.add(InlineKeyboardButton(
-        text=back_text,
-        callback_data="back_to_main"
-    ))
+    builder.row(
+        InlineKeyboardButton(text=back_text, callback_data="back_to_main")
+    )
 
-    return keyboard
+    return builder.as_markup()

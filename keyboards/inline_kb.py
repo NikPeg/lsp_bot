@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
 from config import CHANNEL_LINK
@@ -14,13 +15,12 @@ def get_back_keyboard(language: str, callback_data: str = "back_to_main") -> Inl
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопкой "Назад"
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
     back_text = add_emoji_to_text("🔙", get_text(language, "back_button"))
 
-    keyboard.add(InlineKeyboardButton(
-        text=back_text,
-        callback_data=callback_data
-    ))
+    # Создаем клавиатуру через двумерный массив
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=back_text, callback_data=callback_data)]
+    ])
 
     return keyboard
 
@@ -34,23 +34,22 @@ def get_channel_keyboard(language: str) -> InlineKeyboardMarkup:
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопкой для канала и кнопкой "Назад"
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    # Создаем билдер для клавиатуры
+    builder = InlineKeyboardBuilder()
 
     # Кнопка для перехода в канал
     channel_text = add_emoji_to_text("📢", get_text(language, "open_channel_button"))
-    keyboard.add(InlineKeyboardButton(
-        text=channel_text,
-        url=CHANNEL_LINK
-    ))
+    builder.row(
+        InlineKeyboardButton(text=channel_text, url=CHANNEL_LINK)
+    )
 
     # Кнопка "Назад"
     back_text = add_emoji_to_text("🔙", get_text(language, "back_to_main_menu"))
-    keyboard.add(InlineKeyboardButton(
-        text=back_text,
-        callback_data="back_to_main"
-    ))
+    builder.row(
+        InlineKeyboardButton(text=back_text, callback_data="back_to_main")
+    )
 
-    return keyboard
+    return builder.as_markup()
 
 def get_after_file_keyboard(language: str) -> InlineKeyboardMarkup:
     """
@@ -62,13 +61,11 @@ def get_after_file_keyboard(language: str) -> InlineKeyboardMarkup:
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопкой "Назад"
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
-
     # Кнопка для возврата к материалам
     back_text = add_emoji_to_text("🔙", get_text(language, "back_button"))
-    keyboard.add(InlineKeyboardButton(
-        text=back_text,
-        callback_data="back_to_materials"
-    ))
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=back_text, callback_data="back_to_materials")]
+    ])
 
     return keyboard

@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.text_manager import get_text
 from services.file_manager import get_faculties
 from utils.emoji import add_emoji_to_text
@@ -13,7 +14,8 @@ async def get_faculty_selection_keyboard(language: str) -> InlineKeyboardMarkup:
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопками факультетов
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    # Создаем билдер для клавиатуры
+    builder = InlineKeyboardBuilder()
 
     # Получаем список факультетов из файловой системы
     faculties = await get_faculties()
@@ -25,26 +27,23 @@ async def get_faculty_selection_keyboard(language: str) -> InlineKeyboardMarkup:
         faculty_text = get_text(language, faculty_key, default=faculty)
         faculty_text = add_emoji_to_text("🏫", faculty_text)
 
-        keyboard.add(InlineKeyboardButton(
-            text=faculty_text,
-            callback_data=f"faculty:{faculty}"
-        ))
+        builder.row(
+            InlineKeyboardButton(text=faculty_text, callback_data=f"faculty:{faculty}")
+        )
 
     # Добавляем кнопку для выбора языка
     language_settings_text = add_emoji_to_text("🌐", get_text(language, "language_settings_button"))
-    keyboard.add(InlineKeyboardButton(
-        text=language_settings_text,
-        callback_data="open_language_settings"
-    ))
+    builder.row(
+        InlineKeyboardButton(text=language_settings_text, callback_data="open_language_settings")
+    )
 
     # Добавляем кнопку для возврата в главное меню
     back_text = add_emoji_to_text("🔙", get_text(language, "back_to_main_menu"))
-    keyboard.add(InlineKeyboardButton(
-        text=back_text,
-        callback_data="back_to_main"
-    ))
+    builder.row(
+        InlineKeyboardButton(text=back_text, callback_data="back_to_main")
+    )
 
-    return keyboard
+    return builder.as_markup()
 
 def get_language_settings_keyboard(language: str) -> InlineKeyboardMarkup:
     """
@@ -56,18 +55,25 @@ def get_language_settings_keyboard(language: str) -> InlineKeyboardMarkup:
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопками языков
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    # Создаем билдер для клавиатуры
+    builder = InlineKeyboardBuilder()
 
     # Добавляем кнопки для выбора языка
-    keyboard.add(
+    builder.row(
         InlineKeyboardButton(
             text="🇬🇧 English" + (" ✓" if language == "en" else ""),
             callback_data="change_language:en"
-        ),
+        )
+    )
+
+    builder.row(
         InlineKeyboardButton(
             text="🇷🇺 Русский" + (" ✓" if language == "ru" else ""),
             callback_data="change_language:ru"
-        ),
+        )
+    )
+
+    builder.row(
         InlineKeyboardButton(
             text="🇸🇦 العربية" + (" ✓" if language == "ar" else ""),
             callback_data="change_language:ar"
@@ -76,9 +82,8 @@ def get_language_settings_keyboard(language: str) -> InlineKeyboardMarkup:
 
     # Добавляем кнопку назад
     back_text = add_emoji_to_text("🔙", get_text(language, "back_button"))
-    keyboard.add(InlineKeyboardButton(
-        text=back_text,
-        callback_data="back_to_profile"
-    ))
+    builder.row(
+        InlineKeyboardButton(text=back_text, callback_data="back_to_profile")
+    )
 
-    return keyboard
+    return builder.as_markup()

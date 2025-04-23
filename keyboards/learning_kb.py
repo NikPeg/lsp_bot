@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.text_manager import get_text
 from services.file_manager import get_directories, get_files
 from utils.emoji import add_emoji_to_text
@@ -20,7 +21,8 @@ async def get_navigation_keyboard(
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопками для навигации
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    # Создаем билдер для клавиатуры
+    builder = InlineKeyboardBuilder()
 
     # Получаем список папок в текущей директории
     directories = await get_directories(current_path)
@@ -31,13 +33,13 @@ async def get_navigation_keyboard(
         dir_name = directory
 
         # Пытаемся найти перевод для названия папки (если есть)
-        dir_text = get_text(language, f"dir_{dir_name.replace(' ', '_').lower()}", default=dir_name)
+        dir_key = f"dir_{dir_name.replace(' ', '_').lower()}"
+        dir_text = get_text(language, dir_key, default=dir_name)
         dir_text = add_emoji_to_text("📁", dir_text)
 
-        keyboard.add(InlineKeyboardButton(
-            text=dir_text,
-            callback_data=f"navigate:{dir_path}"
-        ))
+        builder.row(
+            InlineKeyboardButton(text=dir_text, callback_data=f"navigate:{dir_path}")
+        )
 
     # Получаем список файлов в текущей директории
     files = await get_files(current_path)
@@ -48,27 +50,25 @@ async def get_navigation_keyboard(
         file_name = os.path.splitext(file)[0]  # Имя файла без расширения
 
         # Пытаемся найти перевод для названия файла (если есть)
-        file_text = get_text(language, f"file_{file_name.replace(' ', '_').lower()}", default=file)
+        file_key = f"file_{file_name.replace(' ', '_').lower()}"
+        file_text = get_text(language, file_key, default=file)
         file_text = add_emoji_to_text("📄", file_text)
 
-        keyboard.add(InlineKeyboardButton(
-            text=file_text,
-            callback_data=f"download:{file_path}"
-        ))
+        builder.row(
+            InlineKeyboardButton(text=file_text, callback_data=f"download:{file_path}")
+        )
 
     # Добавляем кнопку "Назад", если есть родительский путь
     if parent_path:
         back_text = add_emoji_to_text("🔙", get_text(language, "back_button"))
-        keyboard.add(InlineKeyboardButton(
-            text=back_text,
-            callback_data=f"navigate:{parent_path}"
-        ))
+        builder.row(
+            InlineKeyboardButton(text=back_text, callback_data=f"navigate:{parent_path}")
+        )
     else:
         # Если это корневая директория, добавляем кнопку для возврата в главное меню
         back_to_main_text = add_emoji_to_text("🏠", get_text(language, "back_to_main_menu"))
-        keyboard.add(InlineKeyboardButton(
-            text=back_to_main_text,
-            callback_data="back_to_main"
-        ))
+        builder.row(
+            InlineKeyboardButton(text=back_to_main_text, callback_data="back_to_main")
+        )
 
-    return keyboard
+    return builder.as_markup()
