@@ -1,7 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
-from config import DEFAULT_LANGUAGE
 from keyboards.profile_kb import get_faculty_selection_keyboard, get_language_settings_keyboard
 from keyboards.language_kb import get_language_keyboard
 from keyboards.main_kb import get_main_keyboard
@@ -11,7 +10,7 @@ from database.db_manager import set_user_faculty, get_user_faculty, set_user_lan
 from services.text_manager import get_text
 from services.file_manager import get_faculties, check_faculty_exists
 
-from config import PROFILE_INSTRUCTIONS
+from config import PROFILE_INSTRUCTIONS, DEFAULT_LANGUAGE
 
 # Создаем роутер для обработчиков профиля
 router = Router()
@@ -60,7 +59,7 @@ async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     )
 
 @router.callback_query(F.data.startswith("faculty:"))
-async def faculty_callback(callback_query: CallbackQuery, user_language: str):
+async def faculty_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик выбора факультета
     """
@@ -95,12 +94,10 @@ async def faculty_callback(callback_query: CallbackQuery, user_language: str):
     )
 
 @router.callback_query(F.data == "open_language_settings")
-async def open_language_settings_callback(callback_query: CallbackQuery):
+async def open_language_settings_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик открытия настроек языка
     """
-    user_language = callback_query.data.get('user_language', 'ru')
-
     # Получаем текст для настроек языка
     language_settings_text = get_text(user_language, "language_settings_text")
     current_language_text = get_text(user_language, "current_language").format(
@@ -121,7 +118,7 @@ async def open_language_settings_callback(callback_query: CallbackQuery):
     )
 
 @router.callback_query(F.data.startswith("change_language:"))
-async def change_language_callback(callback_query: CallbackQuery):
+async def change_language_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик изменения языка из настроек профиля
     """
@@ -161,12 +158,11 @@ async def change_language_callback(callback_query: CallbackQuery):
     )
 
 @router.callback_query(F.data == "back_to_profile")
-async def back_to_profile_callback(callback_query: CallbackQuery):
+async def back_to_profile_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик возврата к профилю из настроек языка
     """
     user_id = callback_query.from_user.id
-    user_language = callback_query.data.get('user_language', 'ru')
 
     # Получаем текущий факультет пользователя
     current_faculty = await get_user_faculty(user_id)
