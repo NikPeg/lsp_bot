@@ -4,18 +4,16 @@ from aiogram.types import Message, CallbackQuery
 from keyboards.main_kb import get_main_keyboard
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
-from config import UNKNOWN_COMMAND
+from config import UNKNOWN_COMMAND, DEFAULT_LANGUAGE
 
 # Создаем роутер для обработчиков главного меню
 router = Router()
 
 @router.message()
-async def process_main_menu(message: Message):
+async def process_main_menu(message: Message, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик текстовых сообщений в главном меню
     """
-    # Получаем язык пользователя из middleware
-    user_language = message.data.get('user_language', 'ru')
     text = message.text
 
     # Получаем тексты кнопок на языке пользователя
@@ -26,24 +24,24 @@ async def process_main_menu(message: Message):
 
     # Проверяем, какая кнопка была нажата
     if text == profile_text:
-        # Перенаправляем на обработчик профиля (логика будет в другом обработчике)
+        # Перенаправляем на обработчик профиля
         from handlers.profile import profile_handler
-        return await profile_handler(message)
+        return await profile_handler(message, user_language=user_language)
 
     elif text == learning_text:
         # Перенаправляем на обработчик центра обучения
         from handlers.learning import learning_handler
-        return await learning_handler(message)
+        return await learning_handler(message, user_language=user_language)
 
     elif text == schedule_text:
         # Перенаправляем на обработчик расписания
         from handlers.schedule import schedule_handler
-        return await schedule_handler(message)
+        return await schedule_handler(message, user_language=user_language)
 
     elif text == channel_text:
         # Перенаправляем на обработчик канала
         from handlers.channel import channel_handler
-        return await channel_handler(message)
+        return await channel_handler(message, user_language=user_language)
 
     else:
         # Если сообщение не соответствует ни одной кнопке, отправляем сообщение о неизвестной команде
@@ -51,13 +49,10 @@ async def process_main_menu(message: Message):
         await message.answer(unknown_command_text)
 
 @router.callback_query(F.data == "back_to_main")
-async def back_to_main_callback(callback_query: CallbackQuery):
+async def back_to_main_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик возврата в главное меню из других разделов
     """
-    # Получаем язык пользователя из middleware
-    user_language = callback_query.data.get('user_language', 'ru')
-
     # Получаем текст главного меню на языке пользователя
     main_menu_text = get_text(user_language, "main_menu_text")
 

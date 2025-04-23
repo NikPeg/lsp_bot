@@ -5,18 +5,16 @@ from keyboards.inline_kb import get_channel_keyboard
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
 
-from config import CHANNEL_LINK
+from config import CHANNEL_LINK, DEFAULT_LANGUAGE
 
 # Создаем роутер для обработчиков канала
 router = Router()
 
 @router.message(F.text.startswith("📢"))
-async def channel_handler(message: Message):
+async def channel_handler(message: Message, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик нажатия на кнопку "Наш канал"
     """
-    user_language = message.data.get('user_language', 'ru')
-
     # Формируем текст с приглашением подписаться на канал
     channel_text = get_text(user_language, "channel_text").format(channel_link=CHANNEL_LINK)
 

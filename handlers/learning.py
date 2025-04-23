@@ -13,18 +13,17 @@ from services.file_manager import get_directories, get_files, check_file_exists
 from utils.helpers import get_parent_path, format_path, is_image_file
 from utils.emoji import add_emoji_to_text
 
-from config import MATERIALS_FOLDER
+from config import MATERIALS_FOLDER, DEFAULT_LANGUAGE
 
 # Создаем роутер для обработчиков центра обучения
 router = Router()
 
 @router.message(F.text.startswith("📚"))
-async def learning_handler(message: Message):
+async def learning_handler(message: Message, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик нажатия на кнопку "Центр обучения"
     """
     user_id = message.from_user.id
-    user_language = message.data.get('user_language', 'ru')
 
     # Получаем текущий факультет пользователя
     faculty = await get_user_faculty(user_id)
@@ -35,7 +34,7 @@ async def learning_handler(message: Message):
         await message.answer(text)
         # Перенаправление на профиль для выбора факультета
         from handlers.profile import profile_handler
-        return await profile_handler(message)
+        return await profile_handler(message, user_language=user_language)
 
     # Формируем путь к материалам факультета
     faculty_path = os.path.join(MATERIALS_FOLDER, faculty)
@@ -57,11 +56,10 @@ async def learning_handler(message: Message):
     )
 
 @router.callback_query(F.data.startswith("navigate:"))
-async def navigate_callback(callback_query: CallbackQuery):
+async def navigate_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик навигации по папкам с материалами
     """
-    user_language = callback_query.data.get('user_language', 'ru')
     path = callback_query.data.split(":")[1]
 
     # Получаем родительский путь
@@ -97,11 +95,10 @@ async def navigate_callback(callback_query: CallbackQuery):
     )
 
 @router.callback_query(F.data.startswith("download:"))
-async def download_file_callback(callback_query: CallbackQuery):
+async def download_file_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик скачивания файла
     """
-    user_language = callback_query.data.get('user_language', 'ru')
     file_path = callback_query.data.split(":")[1]
 
     # Проверяем существование файла
@@ -142,12 +139,11 @@ async def download_file_callback(callback_query: CallbackQuery):
         )
 
 @router.callback_query(F.data == "back_to_materials")
-async def back_to_materials_callback(callback_query: CallbackQuery):
+async def back_to_materials_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик возврата к материалам после скачивания файла
     """
     user_id = callback_query.from_user.id
-    user_language = callback_query.data.get('user_language', 'ru')
 
     # Получаем текущий факультет пользователя
     faculty = await get_user_faculty(user_id)
@@ -156,7 +152,7 @@ async def back_to_materials_callback(callback_query: CallbackQuery):
         # Если факультет не выбран, возвращаемся в главное меню
         await callback_query.answer()
         from handlers.main_menu import back_to_main_callback
-        return await back_to_main_callback(callback_query)
+        return await back_to_main_callback(callback_query, user_language=user_language)
 
     # Формируем путь к материалам факультета
     faculty_path = os.path.join(MATERIALS_FOLDER, faculty)

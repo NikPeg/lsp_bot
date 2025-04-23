@@ -8,18 +8,16 @@ from keyboards.inline_kb import get_back_keyboard
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
 
-from config import IMAGES_FOLDER
+from config import IMAGES_FOLDER, DEFAULT_LANGUAGE
 
 # Создаем роутер для обработчиков расписания
 router = Router()
 
 @router.message(F.text.startswith("📆"))
-async def schedule_handler(message: Message):
+async def schedule_handler(message: Message, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик нажатия на кнопку "Расписание"
     """
-    user_language = message.data.get('user_language', 'ru')
-
     # Получаем текст для расписания
     schedule_text = get_text(user_language, "schedule_text")
 
@@ -33,11 +31,10 @@ async def schedule_handler(message: Message):
     )
 
 @router.callback_query(F.data.startswith("schedule:"))
-async def schedule_type_callback(callback_query: CallbackQuery):
+async def schedule_type_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик выбора типа расписания
     """
-    user_language = callback_query.data.get('user_language', 'ru')
     schedule_type = callback_query.data.split(":")[1]
 
     # Формируем путь к изображению
@@ -79,12 +76,10 @@ async def schedule_type_callback(callback_query: CallbackQuery):
         )
 
 @router.callback_query(F.data == "back_to_schedule")
-async def back_to_schedule_callback(callback_query: CallbackQuery):
+async def back_to_schedule_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
     Обработчик возврата к выбору типа расписания
     """
-    user_language = callback_query.data.get('user_language', 'ru')
-
     # Получаем текст для расписания
     schedule_text = get_text(user_language, "schedule_text")
 
