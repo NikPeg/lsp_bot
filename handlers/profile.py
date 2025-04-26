@@ -94,9 +94,32 @@ async def faculty_callback(callback_query: CallbackQuery, user_language: str = D
     # Получаем обновленную клавиатуру
     keyboard = await get_faculty_selection_keyboard(user_language)
 
-    # Обновляем сообщение
-    await callback_query.message.edit_text(
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.jpg")
+
+    # Проверяем, есть ли у сообщения фото
+    if callback_query.message.photo:
+        try:
+            # Если это фото, пытаемся обновить подпись и клавиатуру
+            await callback_query.message.edit_caption(
+                caption=profile_text,
+                reply_markup=keyboard
+            )
+            return
+        except Exception as e:
+            print(f"Error editing caption: {e}")
+
+    try:
+        # Пробуем удалить предыдущее сообщение, если не удалось обновить подпись
+        await callback_query.message.delete()
+    except Exception as e:
+        print(f"Error deleting message: {e}")
+
+    # Отправляем новое сообщение с изображением
+    await send_message_with_image(
+        message=callback_query.message,
         text=profile_text,
+        image_path=image_path,
         reply_markup=keyboard
     )
 
