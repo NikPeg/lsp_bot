@@ -6,6 +6,7 @@ from utils.helpers import (
     is_image_file,
     split_long_message
 )
+from utils.message_utils import send_message_with_image
 
 from utils.emoji import (
     add_emoji_to_text,
@@ -22,5 +23,6 @@ __all__ = [
     'split_long_message',
     'add_emoji_to_text',
     'get_emoji_for_key',
-    'get_emoji_for_file'
+    'get_emoji_for_file',
+    'send_message_with_image'
 ]

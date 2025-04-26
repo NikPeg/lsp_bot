@@ -4,7 +4,9 @@ from aiogram.types import Message, CallbackQuery
 from keyboards.inline_kb import get_channel_keyboard
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
-
+from config import INTERFACE_IMAGES_FOLDER, CHANNEL_LINK
+from utils.message_utils import send_message_with_image
+import os
 from config import CHANNEL_LINK, DEFAULT_LANGUAGE
 
 # Создаем роутер для обработчиков канала
@@ -21,11 +23,15 @@ async def channel_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     # Получаем клавиатуру с кнопкой для перехода в канал
     keyboard = get_channel_keyboard(user_language)
 
-    # Отправляем сообщение с приглашением
-    await message.answer(
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "channel.jpg")
+
+    # Отправляем сообщение с изображением
+    await send_message_with_image(
+        message=message,
         text=channel_text,
-        reply_markup=keyboard,
-        disable_web_page_preview=False  # Разрешаем предпросмотр ссылки
+        image_path=image_path,
+        reply_markup=keyboard
     )
 
 def setup_channel_handlers(dp):

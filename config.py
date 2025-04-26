@@ -9,7 +9,8 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_LINK = os.getenv("CHANNEL_LINK")
 MATERIALS_FOLDER = os.getenv("MATERIALS_FOLDER", "data/materials")
-IMAGES_FOLDER = os.getenv("IMAGES_FOLDER", "images")
+IMAGES_FOLDER = os.getenv("IMAGES_FOLDER", "images/schedule")
+INTERFACE_IMAGES_FOLDER = os.getenv("INTERFACE_IMAGES_FOLDER", "images/interface")
 DEFAULT_LANGUAGE = os.getenv("LANGUAGE_DEFAULT", "ru")
 
 # Пути к директориям проекта

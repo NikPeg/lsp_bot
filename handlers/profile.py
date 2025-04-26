@@ -4,7 +4,9 @@ from aiogram.types import Message, CallbackQuery
 from keyboards.profile_kb import get_faculty_selection_keyboard, get_language_settings_keyboard
 from keyboards.language_kb import get_language_keyboard
 from keyboards.main_kb import get_main_keyboard
-
+from config import INTERFACE_IMAGES_FOLDER
+from utils.message_utils import send_message_with_image
+import os
 from database.db_manager import set_user_faculty, get_user_faculty, set_user_language
 
 from services.text_manager import get_text
@@ -52,9 +54,14 @@ async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     # Получаем клавиатуру с выбором факультета
     keyboard = await get_faculty_selection_keyboard(user_language)
 
-    # Отправляем сообщение с инструкциями и клавиатурой выбора факультета
-    await message.answer(
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.jpg")
+
+    # Отправляем сообщение с изображением
+    await send_message_with_image(
+        message=message,
         text=profile_text,
+        image_path=image_path,
         reply_markup=keyboard
     )
 

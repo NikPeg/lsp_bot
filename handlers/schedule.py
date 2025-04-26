@@ -9,7 +9,9 @@ from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
 
 from config import IMAGES_FOLDER, DEFAULT_LANGUAGE
-
+from config import INTERFACE_IMAGES_FOLDER, IMAGES_FOLDER
+from utils.message_utils import send_message_with_image
+import os
 # Создаем роутер для обработчиков расписания
 router = Router()
 
@@ -24,9 +26,14 @@ async def schedule_handler(message: Message, user_language: str = DEFAULT_LANGUA
     # Получаем клавиатуру для выбора типа расписания
     keyboard = get_schedule_keyboard(user_language)
 
-    # Отправляем сообщение с выбором типа расписания
-    await message.answer(
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "schedule.jpg")
+
+    # Отправляем сообщение с изображением
+    await send_message_with_image(
+        message=message,
         text=schedule_text,
+        image_path=image_path,
         reply_markup=keyboard
     )
 

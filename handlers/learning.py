@@ -6,7 +6,9 @@ from keyboards.learning_kb import get_navigation_keyboard
 from keyboards.inline_kb import get_back_keyboard, get_after_file_keyboard
 
 from database.db_manager import get_user_faculty, get_user_language
-
+from config import INTERFACE_IMAGES_FOLDER, MATERIALS_FOLDER
+from utils.message_utils import send_message_with_image
+import os
 from services.text_manager import get_text
 from services.file_manager import get_directories, get_files, check_file_exists
 
@@ -50,9 +52,14 @@ async def learning_handler(message: Message, user_language: str = DEFAULT_LANGUA
     # Получаем клавиатуру для навигации
     keyboard = await get_navigation_keyboard(user_language, faculty_path)
 
-    # Отправляем сообщение с навигацией
-    await message.answer(
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "learning.jpg")
+
+    # Отправляем сообщение с изображением
+    await send_message_with_image(
+        message=message,
         text=text,
+        image_path=image_path,
         reply_markup=keyboard
     )
 

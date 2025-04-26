@@ -7,6 +7,9 @@ from keyboards.main_kb import get_main_keyboard
 from database.db_manager import set_user_language, get_user_language
 from config import DEFAULT_LANGUAGE
 from services.text_manager import get_text
+from config import INTERFACE_IMAGES_FOLDER, DEFAULT_LANGUAGE
+from utils.message_utils import send_message_with_image
+import os
 
 # Создаем роутер для обработчиков старта
 router = Router()
@@ -48,8 +51,18 @@ async def language_callback(callback_query: CallbackQuery):
 
     # Отправляем новое сообщение с главным меню
     main_menu_text = get_text(language_code, "main_menu_text")
-    await callback_query.message.answer(
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.jpg")
+
+    # Отвечаем на callback и обновляем сообщение
+    await callback_query.answer(f"Language set to {language_code}")
+    await callback_query.message.edit_text(welcome_text)
+
+    # Отправляем новое сообщение с главным меню и изображением
+    await send_message_with_image(
+        message=callback_query.message,
         text=main_menu_text,
+        image_path=image_path,
         reply_markup=main_keyboard
     )
 
