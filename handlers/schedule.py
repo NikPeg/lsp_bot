@@ -66,15 +66,24 @@ async def schedule_type_callback(callback_query: CallbackQuery, user_language: s
         # Создаем объект FSInputFile для изображения
         photo = FSInputFile(image_path)
 
-        # Сначала отвечаем на callback и обновляем сообщение
-        await callback_query.message.edit_text(schedule_text)
+        try:
+            # Пробуем отредактировать текущее сообщение
+            await callback_query.message.edit_text(schedule_text)
+        except Exception:
+            # Если не получается отредактировать (например, если это фото),
+            # удаляем текущее сообщение и отправляем новое
+            try:
+                await callback_query.message.delete()
+            except Exception:
+                # Если не удалось удалить, просто игнорируем ошибку
+                pass
 
-        # Затем отправляем изображение
-        await callback_query.message.answer_photo(
-            photo=photo,
-            caption=schedule_text,
-            reply_markup=get_back_keyboard(user_language, "back_to_schedule")
-        )
+            # Отправляем новое сообщение
+            await callback_query.message.answer_photo(
+                photo=photo,
+                caption=schedule_text,
+                reply_markup=get_back_keyboard(user_language, "back_to_schedule")
+            )
 
     except Exception as e:
         # В случае ошибки сообщаем пользователю
