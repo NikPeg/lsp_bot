@@ -45,19 +45,22 @@ async def language_callback(callback_query: CallbackQuery):
     # Создаем основную клавиатуру на выбранном языке
     main_keyboard = get_main_keyboard(language_code)
 
-    # Отвечаем на callback и обновляем сообщение
-    await callback_query.answer(f"Language set to {language_code}")
-    await callback_query.message.edit_text(welcome_text)
-
-    # Отправляем новое сообщение с главным меню
-    main_menu_text = get_text(language_code, "main_menu_text")
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.png")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.jpg")
 
-    # Отвечаем на callback и обновляем сообщение
+    # Отвечаем на callback
     await callback_query.answer(f"Language set to {language_code}")
-    await callback_query.message.edit_text(welcome_text)
 
+    try:
+        # Пробуем изменить текущее сообщение, только если оно отличается от текущего
+        current_text = callback_query.message.text or callback_query.message.caption or ""
+        if current_text != welcome_text:
+            await callback_query.message.edit_text(welcome_text)
+    except Exception as e:
+        # Если возникла ошибка при редактировании, просто логируем ее и продолжаем
+        print(f"Error editing message: {e}")
+
+    main_menu_text = get_text(language_code, "main_menu_text")
     # Отправляем новое сообщение с главным меню и изображением
     await send_message_with_image(
         message=callback_query.message,
