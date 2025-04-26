@@ -55,7 +55,7 @@ async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     keyboard = await get_faculty_selection_keyboard(user_language)
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
 
     # Отправляем сообщение с изображением
     await send_message_with_image(
