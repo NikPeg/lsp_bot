@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 import os
@@ -39,6 +41,7 @@ async def schedule_type_callback(callback_query: CallbackQuery, user_language: s
 
     # Формируем путь к изображению
     image_path = os.path.join(IMAGES_FOLDER, f"{schedule_type}.png")
+    logging.info(image_path)
 
     # Получаем текст для выбранного типа расписания
     schedule_text_key = f"{schedule_type}_schedule_text"
