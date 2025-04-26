@@ -1,7 +1,5 @@
-import logging
-
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 import os
 
 from keyboards.schedule_kb import get_schedule_keyboard
@@ -41,7 +39,6 @@ async def schedule_type_callback(callback_query: CallbackQuery, user_language: s
 
     # Формируем путь к изображению
     image_path = os.path.join(IMAGES_FOLDER, f"{schedule_type}.png")
-    logging.info(image_path)
 
     # Получаем текст для выбранного типа расписания
     schedule_text_key = f"{schedule_type}_schedule_text"
@@ -59,17 +56,18 @@ async def schedule_type_callback(callback_query: CallbackQuery, user_language: s
             )
             return
 
-        # Отправляем изображение расписания
-        with open(image_path, 'rb') as photo:
-            # Сначала отвечаем на callback и обновляем сообщение
-            await callback_query.message.edit_text(schedule_text)
+        # Создаем объект FSInputFile для изображения
+        photo = FSInputFile(image_path)
 
-            # Затем отправляем изображение
-            await callback_query.message.answer_photo(
-                photo=photo,
-                caption=schedule_text,
-                reply_markup=get_back_keyboard(user_language, "back_to_schedule")
-            )
+        # Сначала отвечаем на callback и обновляем сообщение
+        await callback_query.message.edit_text(schedule_text)
+
+        # Затем отправляем изображение
+        await callback_query.message.answer_photo(
+            photo=photo,
+            caption=schedule_text,
+            reply_markup=get_back_keyboard(user_language, "back_to_schedule")
+        )
 
     except Exception as e:
         # В случае ошибки сообщаем пользователю
@@ -89,12 +87,29 @@ async def back_to_schedule_callback(callback_query: CallbackQuery, user_language
     # Получаем клавиатуру для выбора типа расписания
     keyboard = get_schedule_keyboard(user_language)
 
-    # Отвечаем на callback и обновляем сообщение
+    # Отвечаем на callback
     await callback_query.answer()
-    await callback_query.message.edit_text(
-        text=schedule_text,
-        reply_markup=keyboard
-    )
+
+    try:
+        # Пробуем отредактировать текущее сообщение
+        await callback_query.message.edit_text(
+            text=schedule_text,
+            reply_markup=keyboard
+        )
+    except Exception:
+        # Если не получается отредактировать (например, если это фото),
+        # удаляем текущее сообщение и отправляем новое
+        try:
+            await callback_query.message.delete()
+        except Exception:
+            # Если не удалось удалить, просто игнорируем ошибку
+            pass
+
+        # Отправляем новое сообщение
+        await callback_query.message.answer(
+            text=schedule_text,
+            reply_markup=keyboard
+        )
 
 def setup_schedule_handlers(dp):
     """

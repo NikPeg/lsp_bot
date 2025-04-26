@@ -183,12 +183,28 @@ async def back_to_materials_callback(callback_query: CallbackQuery, user_languag
     # Получаем клавиатуру для навигации
     keyboard = await get_navigation_keyboard(user_language, faculty_path)
 
-    # Отвечаем на callback и обновляем сообщение
+    # Отвечаем на callback
     await callback_query.answer()
-    await callback_query.message.edit_text(
-        text=text,
-        reply_markup=keyboard
-    )
+
+    try:
+        # Пробуем отредактировать текущее сообщение
+        await callback_query.message.edit_text(
+            text=text,
+            reply_markup=keyboard
+        )
+    except Exception:
+        # Если не получается отредактировать, удаляем текущее сообщение и отправляем новое
+        try:
+            await callback_query.message.delete()
+        except Exception:
+            # Если не удалось удалить, просто игнорируем ошибку
+            pass
+
+        # Отправляем новое сообщение
+        await callback_query.message.answer(
+            text=text,
+            reply_markup=keyboard
+        )
 
 def setup_learning_handlers(dp):
     """
