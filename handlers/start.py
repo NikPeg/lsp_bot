@@ -46,7 +46,7 @@ async def language_callback(callback_query: CallbackQuery):
     main_keyboard = get_main_keyboard(language_code)
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.png")
 
     # Отвечаем на callback
     await callback_query.answer(f"Language set to {language_code}")
