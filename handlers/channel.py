@@ -24,7 +24,7 @@ async def channel_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     keyboard = get_channel_keyboard(user_language)
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "channel.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "channel.png")
 
     # Отправляем сообщение с изображением
     await send_message_with_image(

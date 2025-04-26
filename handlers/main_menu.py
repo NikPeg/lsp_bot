@@ -65,7 +65,7 @@ async def back_to_main_callback(callback_query: CallbackQuery, user_language: st
     await callback_query.answer()
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.png")
 
     try:
         # Пробуем отредактировать текущее сообщение

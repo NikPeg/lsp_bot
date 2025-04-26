@@ -52,7 +52,7 @@ async def language_callback(callback_query: CallbackQuery):
     # Отправляем новое сообщение с главным меню
     main_menu_text = get_text(language_code, "main_menu_text")
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.png")
 
     # Отвечаем на callback и обновляем сообщение
     await callback_query.answer(f"Language set to {language_code}")

@@ -53,7 +53,7 @@ async def learning_handler(message: Message, user_language: str = DEFAULT_LANGUA
     keyboard = await get_navigation_keyboard(user_language, faculty_path)
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "learning.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "learning.png")
 
     # Отправляем сообщение с изображением
     await send_message_with_image(

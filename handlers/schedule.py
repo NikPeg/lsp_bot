@@ -27,7 +27,7 @@ async def schedule_handler(message: Message, user_language: str = DEFAULT_LANGUA
     keyboard = get_schedule_keyboard(user_language)
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "schedule.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "schedule.png")
 
     # Отправляем сообщение с изображением
     await send_message_with_image(
