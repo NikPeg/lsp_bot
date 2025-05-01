@@ -105,7 +105,7 @@ async def navigate_callback(callback_query: CallbackQuery, user_language: str = 
     # Отвечаем на callback и обновляем сообщение
     await callback_query.answer()
     await callback_query.message.delete()
-    await callback_query.message.edit_text(
+    await callback_query.message.answer(
         text=text,
         reply_markup=keyboard
     )
