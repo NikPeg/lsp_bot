@@ -19,26 +19,14 @@ from utils.emoji import add_emoji_to_text
 # Создаем роутер для обработчиков профиля
 router = Router()
 
-# Список университетов
-UNIVERSITIES = [
-    "Санкт-Петербургский государственный педиатрический медицинский университет",
-    "Военно-медицинская академия имени С. М. Кирова",
-    "Северо-Западный государственный медицинский университет им. И.И.Мечникова",
-    "УНИВЕРСИТЕТ РЕАВИЗ",
-    "Санкт-Петербургский медико-социальный институт"
+# Короткие имена для университетов (для callback_data и локализации)
+UNIVERSITY_SHORTCUTS = [
+    "spbgpmu",  # Санкт-Петербургский государственный педиатрический медицинский университет
+    "vmeda",    # Военно-медицинская академия имени С. М. Кирова
+    "szgmu",    # Северо-Западный государственный медицинский университет им. И.И.Мечникова
+    "reaviz",   # УНИВЕРСИТЕТ РЕАВИЗ
+    "spbmsi"    # Санкт-Петербургский медико-социальный институт
 ]
-
-# Короткие имена для университетов (для callback_data)
-UNIVERSITY_SHORTCUTS = {
-    "Санкт-Петербургский государственный педиатрический медицинский университет": "spbgpmu",
-    "Военно-медицинская академия имени С. М. Кирова": "vmeda",
-    "Северо-Западный государственный медицинский университет им. И.И.Мечникова": "szgmu",
-    "УНИВЕРСИТЕТ РЕАВИЗ": "reaviz",
-    "Санкт-Петербургский медико-социальный институт": "spbmsi"
-}
-
-# Обратный словарь для получения полного названия по короткому имени
-UNIVERSITY_NAMES = {v: k for k, v in UNIVERSITY_SHORTCUTS.items()}
 
 # Функция для получения клавиатуры выбора университета
 async def get_university_selection_keyboard(language: str, selected_university: str = None) -> InlineKeyboardMarkup:
@@ -54,14 +42,15 @@ async def get_university_selection_keyboard(language: str, selected_university: 
     """
     builder = InlineKeyboardBuilder()
 
-    for university in UNIVERSITIES:
-        # Получаем короткое имя для callback_data
-        univ_shortcut = UNIVERSITY_SHORTCUTS.get(university, "unknown")
+    for univ_shortcut in UNIVERSITY_SHORTCUTS:
+        # Получаем переведенное название университета
+        univ_text = get_text(language, f"univ_{univ_shortcut}")
 
-        # Создаем текст кнопки, добавляем галочку для выбранного университета
-        # Используем только первые 30 символов для отображения, чтобы кнопки не были слишком длинными
-        univ_text = university[:30] + "..." if len(university) > 30 else university
+        # Добавляем многоточие, если название слишком длинное
+        if len(univ_text) > 30:
+            univ_text = univ_text[:30] + "..."
 
+        # Добавляем галочку для выбранного университета
         if univ_shortcut == selected_university:
             univ_text = add_emoji_to_text("🏛️", univ_text) + " ✅"
         else:
@@ -102,8 +91,13 @@ async def get_faculty_selection_keyboard_with_selected(language: str, selected_u
 
     # Добавляем информацию о выбранном университете
     if selected_university:
-        university_name = UNIVERSITY_NAMES.get(selected_university, selected_university)
-        university_text = university_name[:30] + "..." if len(university_name) > 30 else university_name
+        # Получаем переведенное название университета
+        university_text = get_text(language, f"univ_{selected_university}")
+
+        # Добавляем многоточие, если название слишком длинное
+        if len(university_text) > 30:
+            university_text = university_text[:30] + "..."
+
         university_text = add_emoji_to_text("🏛️", university_text) + " ✅"
         builder.row(
             InlineKeyboardButton(text=university_text, callback_data=f"back_to_univ")
@@ -177,8 +171,16 @@ async def university_callback(callback_query: CallbackQuery, user_language: str 
     university_shortcut = callback_query.data.split(":")[1]
     user_id = callback_query.from_user.id
 
+    # Получаем переведенное название университета
+    university_name = get_text(user_language, f"univ_{university_shortcut}")
+
+    # Формируем текст для уведомления
+    university_selected_text = get_text(user_language, "university_selected").format(
+        university=university_name[:20] + "..." if len(university_name) > 20 else university_name
+    )
+
     # Отвечаем на callback
-    await callback_query.answer(f"Выбран университет: {UNIVERSITY_NAMES.get(university_shortcut, university_shortcut)[:20]}...")
+    await callback_query.answer(university_selected_text)
 
     # Получаем текущий факультет пользователя
     current_faculty = await get_user_faculty(user_id)
