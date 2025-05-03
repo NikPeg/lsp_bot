@@ -55,11 +55,11 @@
   "no_materials_found_in_semester": "No materials found for selected semester",
   "select_university": "Select university:",
   "university_selected": "University selected: {university}",
-  "univ_spbgpmu": "St. Petersburg State Pediatric Medical University",
-  "univ_vmeda": "S.M. Kirov Military Medical Academy",
-  "univ_szgmu": "North-Western State Medical University named after I.I. Mechnikov",
+  "univ_spbgpmu": "SPbSPMU (Pediatric)",
+  "univ_vmeda": "Military Medical Academy",
+  "univ_szgmu": "NWSMU (Mechnikov)",
   "univ_reaviz": "REAVIZ University",
-  "univ_spbmsi": "St. Petersburg Medical and Social Institute",
+  "univ_spbmsi": "SPb Medical Institute",
   "language_settings_button": "Language Settings",
   "language_settings_text": "Select the interface language:"
 }

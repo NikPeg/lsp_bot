@@ -44,12 +44,11 @@
   "select_university": "اختر الجامعة:",
   "no_materials_found_in_semester": "لم يتم العثور على مواد للفصل الدراسي المحدد",
   "university_selected": "تم اختيار الجامعة: {university}",
-  "univ_spbgpmu": "جامعة سانت بطرسبرغ الحكومية لطب الأطفال",
-  "univ_vmeda": "أكاديمية كيروف الطبية العسكرية",
-  "univ_szgmu": "جامعة الشمال الغربي الطبية الحكومية التي تحمل اسم ميتشنيكوف",
+  "univ_spbgpmu": "جامعة طب الأطفال",
+  "univ_vmeda": "الأكاديمية الطبية العسكرية",
+  "univ_szgmu": "جامعة ميتشنيكوف الطبية",
   "univ_reaviz": "جامعة ريافيز",
-  "univ_spbmsi": "معهد سانت بطرسبرغ الطبي والاجتماعي",
-  "univ_spbmsi": "معهد سانت بطرسبرغ الطبي والاجتماعي",
+  "univ_spbmsi": "معهد سانت بطرسبرغ الطبي",
   "language_settings_button": "إعدادات اللغة",
   "language_settings_text": "حدد لغة الواجهة:"
 }
