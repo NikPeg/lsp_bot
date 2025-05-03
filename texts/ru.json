@@ -57,5 +57,7 @@
   "no_faculty_selected": "Факультет не выбран",
   "faculty_settings_text": "Настройки факультета:",
   "change_faculty": "Сменить факультет",
-  "no_materials_found_in_semester": "Материалы не найдены для выбранного семестра"
+  "no_materials_found_in_semester": "Материалы не найдены для выбранного семестра",
+  "select_university": "Выберите университет:",
+  "university_selected": "Университет выбран: {university}"
 }

@@ -19,20 +19,95 @@ from utils.emoji import add_emoji_to_text
 # Создаем роутер для обработчиков профиля
 router = Router()
 
-# Создаем новую функцию для получения клавиатуры с выбором факультета, с отображением выбранного факультета
-async def get_faculty_selection_keyboard_with_selected(language: str, selected_faculty: str = None) -> InlineKeyboardMarkup:
+# Список университетов
+UNIVERSITIES = [
+    "Санкт-Петербургский государственный педиатрический медицинский университет",
+    "Военно-медицинская академия имени С. М. Кирова",
+    "Северо-Западный государственный медицинский университет им. И.И.Мечникова",
+    "УНИВЕРСИТЕТ РЕАВИЗ",
+    "Санкт-Петербургский медико-социальный институт"
+]
+
+# Короткие имена для университетов (для callback_data)
+UNIVERSITY_SHORTCUTS = {
+    "Санкт-Петербургский государственный педиатрический медицинский университет": "spbgpmu",
+    "Военно-медицинская академия имени С. М. Кирова": "vmeda",
+    "Северо-Западный государственный медицинский университет им. И.И.Мечникова": "szgmu",
+    "УНИВЕРСИТЕТ РЕАВИЗ": "reaviz",
+    "Санкт-Петербургский медико-социальный институт": "spbmsi"
+}
+
+# Обратный словарь для получения полного названия по короткому имени
+UNIVERSITY_NAMES = {v: k for k, v in UNIVERSITY_SHORTCUTS.items()}
+
+# Функция для получения клавиатуры выбора университета
+async def get_university_selection_keyboard(language: str, selected_university: str = None) -> InlineKeyboardMarkup:
+    """
+    Создает инлайн-клавиатуру для выбора университета
+
+    Аргументы:
+        language (str): Код языка (ru, en, ar)
+        selected_university (str, optional): Короткое имя выбранного университета
+
+    Возвращает:
+        InlineKeyboardMarkup: Клавиатура с кнопками университетов
+    """
+    builder = InlineKeyboardBuilder()
+
+    for university in UNIVERSITIES:
+        # Получаем короткое имя для callback_data
+        univ_shortcut = UNIVERSITY_SHORTCUTS.get(university, "unknown")
+
+        # Создаем текст кнопки, добавляем галочку для выбранного университета
+        # Используем только первые 30 символов для отображения, чтобы кнопки не были слишком длинными
+        univ_text = university[:30] + "..." if len(university) > 30 else university
+
+        if univ_shortcut == selected_university:
+            univ_text = add_emoji_to_text("🏛️", univ_text) + " ✅"
+        else:
+            univ_text = add_emoji_to_text("🏛️", univ_text)
+
+        builder.row(
+            InlineKeyboardButton(text=univ_text, callback_data=f"univ:{univ_shortcut}")
+        )
+
+    # Добавляем кнопку для выбора языка
+    language_settings_text = add_emoji_to_text("🌐", get_text(language, "language_settings_button"))
+    builder.row(
+        InlineKeyboardButton(text=language_settings_text, callback_data="open_language_settings")
+    )
+
+    # Добавляем кнопку для возврата в главное меню
+    back_text = add_emoji_to_text("🔙", get_text(language, "back_to_main_menu"))
+    builder.row(
+        InlineKeyboardButton(text=back_text, callback_data="back_to_main")
+    )
+
+    return builder.as_markup()
+
+# Создаем функцию для получения клавиатуры с выбором факультета
+async def get_faculty_selection_keyboard_with_selected(language: str, selected_university: str = None, selected_faculty: str = None) -> InlineKeyboardMarkup:
     """
     Создает инлайн-клавиатуру для выбора факультета с отметкой выбранного
 
     Аргументы:
         language (str): Код языка (ru, en, ar)
+        selected_university (str, optional): Короткое имя выбранного университета
         selected_faculty (str, optional): Выбранный факультет
 
     Возвращает:
         InlineKeyboardMarkup: Клавиатура с кнопками факультетов
     """
-    # Создаем билдер для клавиатуры
     builder = InlineKeyboardBuilder()
+
+    # Добавляем информацию о выбранном университете
+    if selected_university:
+        university_name = UNIVERSITY_NAMES.get(selected_university, selected_university)
+        university_text = university_name[:30] + "..." if len(university_name) > 30 else university_name
+        university_text = add_emoji_to_text("🏛️", university_text) + " ✅"
+        builder.row(
+            InlineKeyboardButton(text=university_text, callback_data=f"back_to_univ")
+        )
 
     # Получаем список факультетов из файловой системы
     faculties = await get_faculties()
@@ -74,14 +149,14 @@ async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     """
     user_id = message.from_user.id
 
-    # Получаем текущий факультет пользователя
-    current_faculty = await get_user_faculty(user_id)
-
-    # Формируем текст профиля без указания текущего факультета
+    # Формируем текст профиля
     profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
+    profile_text += f"\n\n{get_text(user_language, 'select_university')}"
 
-    # Получаем клавиатуру с выбором факультета, отмечаем выбранный
-    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, current_faculty)
+    # Получаем клавиатуру с выбором университета
+    # По умолчанию выбираем первый университет в списке
+    selected_university = "spbgpmu"  # СПбГПМУ по умолчанию
+    keyboard = await get_university_selection_keyboard(user_language, selected_university)
 
     # Путь к изображению
     image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
@@ -89,6 +164,102 @@ async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     # Отправляем сообщение с изображением
     await send_message_with_image(
         message=message,
+        text=profile_text,
+        image_path=image_path,
+        reply_markup=keyboard
+    )
+
+@router.callback_query(F.data.startswith("univ:"))
+async def university_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
+    """
+    Обработчик выбора университета
+    """
+    university_shortcut = callback_query.data.split(":")[1]
+    user_id = callback_query.from_user.id
+
+    # Отвечаем на callback
+    await callback_query.answer(f"Выбран университет: {UNIVERSITY_NAMES.get(university_shortcut, university_shortcut)[:20]}...")
+
+    # Получаем текущий факультет пользователя
+    current_faculty = await get_user_faculty(user_id)
+
+    # Формируем текст сообщения для выбора факультета
+    profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
+    profile_text += f"\n\n{get_text(user_language, 'select_faculty')}"
+
+    # Получаем клавиатуру с выбором факультета
+    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, university_shortcut, current_faculty)
+
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
+
+    # Проверяем, есть ли у сообщения фото
+    if callback_query.message.photo:
+        try:
+            # Если это фото, пытаемся обновить подпись и клавиатуру
+            await callback_query.message.edit_caption(
+                caption=profile_text,
+                reply_markup=keyboard
+            )
+            return
+        except Exception as e:
+            print(f"Error editing caption: {e}")
+
+    try:
+        # Пробуем удалить предыдущее сообщение, если не удалось обновить подпись
+        await callback_query.message.delete()
+    except Exception as e:
+        print(f"Error deleting message: {e}")
+
+    # Отправляем новое сообщение с изображением
+    await send_message_with_image(
+        message=callback_query.message,
+        text=profile_text,
+        image_path=image_path,
+        reply_markup=keyboard
+    )
+
+@router.callback_query(F.data == "back_to_univ")
+async def back_to_university_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
+    """
+    Обработчик возврата к выбору университета
+    """
+    # Формируем текст профиля
+    profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
+    profile_text += f"\n\n{get_text(user_language, 'select_university')}"
+
+    # Получаем клавиатуру с выбором университета
+    # По умолчанию выбираем первый университет в списке
+    selected_university = "spbgpmu"  # СПбГПМУ по умолчанию
+    keyboard = await get_university_selection_keyboard(user_language, selected_university)
+
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
+
+    # Отвечаем на callback
+    await callback_query.answer()
+
+    # Проверяем, есть ли у сообщения фото
+    if callback_query.message.photo:
+        try:
+            # Если это фото, пытаемся обновить подпись и клавиатуру
+            await callback_query.message.edit_caption(
+                caption=profile_text,
+                reply_markup=keyboard
+            )
+            return
+        except Exception as e:
+            print(f"Error editing caption: {e}")
+
+    try:
+        # Пробуем удалить предыдущее сообщение, если не удалось обновить подпись
+        await callback_query.message.delete()
+    except Exception as e:
+        print(f"Error deleting message: {e}")
+
+    # Отправляем новое сообщение с изображением
+    await send_message_with_image(
+        message=callback_query.message,
         text=profile_text,
         image_path=image_path,
         reply_markup=keyboard
@@ -115,11 +286,15 @@ async def faculty_callback(callback_query: CallbackQuery, user_language: str = D
     # Отвечаем на callback
     await callback_query.answer(faculty_selected_text)
 
-    # Формируем текст профиля без указания текущего факультета
+    # Формируем текст с информацией о выбранном университете и факультете
     profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
+    profile_text += f"\n\n{get_text(user_language, 'select_faculty')}"
+
+    # По умолчанию выбираем первый университет в списке
+    selected_university = "spbgpmu"  # СПбГПМУ по умолчанию
 
     # Получаем обновленную клавиатуру с отмеченным выбранным факультетом
-    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, faculty)
+    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, selected_university, faculty)
 
     # Путь к изображению
     image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
@@ -233,16 +408,14 @@ async def back_to_profile_callback(callback_query: CallbackQuery, user_language:
     """
     Обработчик возврата к профилю из настроек языка
     """
-    user_id = callback_query.from_user.id
-
-    # Получаем текущий факультет пользователя
-    current_faculty = await get_user_faculty(user_id)
-
-    # Формируем текст профиля без указания текущего факультета
+    # Формируем текст профиля
     profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
+    profile_text += f"\n\n{get_text(user_language, 'select_university')}"
 
-    # Получаем клавиатуру с выбором факультета, отмечаем выбранный
-    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, current_faculty)
+    # Получаем клавиатуру с выбором университета
+    # По умолчанию выбираем первый университет в списке
+    selected_university = "spbgpmu"  # СПбГПМУ по умолчанию
+    keyboard = await get_university_selection_keyboard(user_language, selected_university)
 
     # Путь к изображению
     image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
