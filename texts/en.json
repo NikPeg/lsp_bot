@@ -59,5 +59,7 @@
   "univ_vmeda": "S.M. Kirov Military Medical Academy",
   "univ_szgmu": "North-Western State Medical University named after I.I. Mechnikov",
   "univ_reaviz": "REAVIZ University",
-  "univ_spbmsi": "St. Petersburg Medical and Social Institute"
+  "univ_spbmsi": "St. Petersburg Medical and Social Institute",
+  "language_settings_button": "Language Settings",
+  "language_settings_text": "Select the interface language:"
 }
