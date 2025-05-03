@@ -1,7 +1,8 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from keyboards.profile_kb import get_faculty_selection_keyboard, get_language_settings_keyboard
+from keyboards.profile_kb import get_language_settings_keyboard
 from keyboards.language_kb import get_language_keyboard
 from keyboards.main_kb import get_main_keyboard
 from config import INTERFACE_IMAGES_FOLDER
@@ -13,9 +14,58 @@ from services.text_manager import get_text
 from services.file_manager import get_faculties, check_faculty_exists
 
 from config import PROFILE_INSTRUCTIONS, DEFAULT_LANGUAGE
+from utils.emoji import add_emoji_to_text
 
 # Создаем роутер для обработчиков профиля
 router = Router()
+
+# Создаем новую функцию для получения клавиатуры с выбором факультета, с отображением выбранного факультета
+async def get_faculty_selection_keyboard_with_selected(language: str, selected_faculty: str = None) -> InlineKeyboardMarkup:
+    """
+    Создает инлайн-клавиатуру для выбора факультета с отметкой выбранного
+
+    Аргументы:
+        language (str): Код языка (ru, en, ar)
+        selected_faculty (str, optional): Выбранный факультет
+
+    Возвращает:
+        InlineKeyboardMarkup: Клавиатура с кнопками факультетов
+    """
+    # Создаем билдер для клавиатуры
+    builder = InlineKeyboardBuilder()
+
+    # Получаем список факультетов из файловой системы
+    faculties = await get_faculties()
+
+    # Добавляем кнопку для каждого факультета
+    for faculty in faculties:
+        # Пытаемся найти перевод названия факультета
+        faculty_key = f"faculty_{faculty.split()[0][0]}_name"  # Например, "faculty_L_name" для "Лечебный факультет"
+        faculty_text = get_text(language, faculty_key, default=faculty)
+
+        # Добавляем галочку, если это выбранный факультет
+        if faculty == selected_faculty:
+            faculty_text = add_emoji_to_text("🏫", faculty_text) + " ✅"
+        else:
+            faculty_text = add_emoji_to_text("🏫", faculty_text)
+
+        builder.row(
+            InlineKeyboardButton(text=faculty_text, callback_data=f"faculty:{faculty}")
+        )
+
+    # Добавляем кнопку для выбора языка
+    language_settings_text = add_emoji_to_text("🌐", get_text(language, "language_settings_button"))
+    builder.row(
+        InlineKeyboardButton(text=language_settings_text, callback_data="open_language_settings")
+    )
+
+    # Добавляем кнопку для возврата в главное меню
+    back_text = add_emoji_to_text("🔙", get_text(language, "back_to_main_menu"))
+    builder.row(
+        InlineKeyboardButton(text=back_text, callback_data="back_to_main")
+    )
+
+    return builder.as_markup()
 
 @router.message(F.text.startswith("👤"))
 async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAGE):
@@ -27,32 +77,11 @@ async def profile_handler(message: Message, user_language: str = DEFAULT_LANGUAG
     # Получаем текущий факультет пользователя
     current_faculty = await get_user_faculty(user_id)
 
-    # Формируем текст профиля
+    # Формируем текст профиля без указания текущего факультета
     profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
 
-    if current_faculty:
-        # Проверяем, существует ли факультет в файловой системе
-        faculty_exists = await check_faculty_exists(current_faculty)
-
-        if faculty_exists:
-            # Получаем ключ для перевода названия факультета
-            faculty_key = f"faculty_{current_faculty.split()[0][0]}_name"
-            faculty_name = get_text(user_language, faculty_key, default=current_faculty)
-
-            # Добавляем информацию о текущем факультете
-            current_faculty_text = get_text(user_language, "current_faculty").format(faculty=faculty_name)
-            profile_text += f"\n\n{current_faculty_text}"
-        else:
-            # Если факультет не существует, уведомляем пользователя
-            profile_text += f"\n\n{get_text(user_language, 'faculty_not_found')}"
-            # Сбрасываем выбор факультета
-            await set_user_faculty(user_id, None)
-    else:
-        # Если факультет не выбран, добавляем соответствующую информацию
-        profile_text += f"\n\n{get_text(user_language, 'no_faculty_selected')}"
-
-    # Получаем клавиатуру с выбором факультета
-    keyboard = await get_faculty_selection_keyboard(user_language)
+    # Получаем клавиатуру с выбором факультета, отмечаем выбранный
+    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, current_faculty)
 
     # Путь к изображению
     image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
@@ -86,16 +115,14 @@ async def faculty_callback(callback_query: CallbackQuery, user_language: str = D
     # Отвечаем на callback
     await callback_query.answer(faculty_selected_text)
 
-    # Обновляем текст сообщения
+    # Формируем текст профиля без указания текущего факультета
     profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
-    current_faculty_text = get_text(user_language, "current_faculty").format(faculty=faculty_name)
-    profile_text += f"\n\n{current_faculty_text}"
 
-    # Получаем обновленную клавиатуру
-    keyboard = await get_faculty_selection_keyboard(user_language)
+    # Получаем обновленную клавиатуру с отмеченным выбранным факультетом
+    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, faculty)
 
     # Путь к изображению
-    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.jpg")
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
 
     # Проверяем, есть ли у сообщения фото
     if callback_query.message.photo:
@@ -140,12 +167,26 @@ async def open_language_settings_callback(callback_query: CallbackQuery, user_la
     # Получаем клавиатуру для выбора языка
     keyboard = get_language_settings_keyboard(user_language)
 
-    # Отвечаем на callback и обновляем сообщение
-    await callback_query.answer()
-    await callback_query.message.edit_text(
-        text=text,
-        reply_markup=keyboard
-    )
+    # Проверяем, есть ли у сообщения фото
+    if callback_query.message.photo:
+        try:
+            # Пробуем удалить предыдущее сообщение
+            await callback_query.message.delete()
+        except Exception as e:
+            print(f"Error deleting message: {e}")
+
+        # Отправляем новое текстовое сообщение
+        await callback_query.message.answer(
+            text=text,
+            reply_markup=keyboard
+        )
+    else:
+        # Отвечаем на callback и обновляем текстовое сообщение
+        await callback_query.answer()
+        await callback_query.message.edit_text(
+            text=text,
+            reply_markup=keyboard
+        )
 
 @router.callback_query(F.data.startswith("change_language:"))
 async def change_language_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
@@ -197,37 +238,29 @@ async def back_to_profile_callback(callback_query: CallbackQuery, user_language:
     # Получаем текущий факультет пользователя
     current_faculty = await get_user_faculty(user_id)
 
-    # Формируем текст профиля
+    # Формируем текст профиля без указания текущего факультета
     profile_text = PROFILE_INSTRUCTIONS.get(user_language, PROFILE_INSTRUCTIONS['en'])
 
-    if current_faculty:
-        # Проверяем, существует ли факультет в файловой системе
-        faculty_exists = await check_faculty_exists(current_faculty)
+    # Получаем клавиатуру с выбором факультета, отмечаем выбранный
+    keyboard = await get_faculty_selection_keyboard_with_selected(user_language, current_faculty)
 
-        if faculty_exists:
-            # Получаем ключ для перевода названия факультета
-            faculty_key = f"faculty_{current_faculty.split()[0][0]}_name"
-            faculty_name = get_text(user_language, faculty_key, default=current_faculty)
+    # Путь к изображению
+    image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "profile.png")
 
-            # Добавляем информацию о текущем факультете
-            current_faculty_text = get_text(user_language, "current_faculty").format(faculty=faculty_name)
-            profile_text += f"\n\n{current_faculty_text}"
-        else:
-            # Если факультет не существует, уведомляем пользователя
-            profile_text += f"\n\n{get_text(user_language, 'faculty_not_found')}"
-            # Сбрасываем выбор факультета
-            await set_user_faculty(user_id, None)
-    else:
-        # Если факультет не выбран, добавляем соответствующую информацию
-        profile_text += f"\n\n{get_text(user_language, 'no_faculty_selected')}"
-
-    # Получаем клавиатуру с выбором факультета
-    keyboard = await get_faculty_selection_keyboard(user_language)
-
-    # Отвечаем на callback и обновляем сообщение
+    # Отвечаем на callback
     await callback_query.answer()
-    await callback_query.message.edit_text(
+
+    # Удаляем текущее сообщение и отправляем новое с изображением
+    try:
+        await callback_query.message.delete()
+    except Exception as e:
+        print(f"Error deleting message: {e}")
+
+    # Отправляем новое сообщение с изображением
+    await send_message_with_image(
+        message=callback_query.message,
         text=profile_text,
+        image_path=image_path,
         reply_markup=keyboard
     )
 
