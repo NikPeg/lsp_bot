@@ -52,5 +52,12 @@
   "faculty_selected": "Faculty selected: {faculty}",
   "current_faculty": "Current faculty: {faculty}",
   "no_faculty_selected": "No faculty selected",
-  "no_materials_found_in_semester": "No materials found for selected semester"
+  "no_materials_found_in_semester": "No materials found for selected semester",
+  "select_university": "Select university:",
+  "university_selected": "University selected: {university}",
+  "univ_spbgpmu": "St. Petersburg State Pediatric Medical University",
+  "univ_vmeda": "S.M. Kirov Military Medical Academy",
+  "univ_szgmu": "North-Western State Medical University named after I.I. Mechnikov",
+  "univ_reaviz": "REAVIZ University",
+  "univ_spbmsi": "St. Petersburg Medical and Social Institute"
 }
