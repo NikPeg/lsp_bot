@@ -58,6 +58,8 @@
   "faculty_settings_text": "Настройки факультета:",
   "change_faculty": "Сменить факультет",
   "no_materials_found_in_semester": "Материалы не найдены для выбранного семестра",
+  "select_university": "Выбери университет:",
+  "university_selected": "Университет выбран: {university}",
   "univ_spbgpmu": "СПбГПМУ (Педиатрический)",
   "univ_vmeda": "ВМедА им. Кирова",
   "univ_szgmu": "СЗГМУ им. Мечникова",
