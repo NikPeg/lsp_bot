@@ -18,6 +18,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 
 from config import MATERIALS_FOLDER, DEFAULT_LANGUAGE
 from utils.file_handler import send_large_file
+from utils.admin_logger import log_file_download
 
 # Создаем роутер для обработчиков центра обучения
 router = Router()
@@ -156,6 +157,9 @@ async def download_file_callback(callback_query: CallbackQuery, user_language: s
         )
         
         if success:
+            # Логируем скачивание файла
+            await log_file_download(callback_query.bot, callback_query.from_user, file_name)
+            
             # Отправляем клавиатуру после успешной отправки файла
             await callback_query.message.answer(
                 text=message,

@@ -9,6 +9,7 @@ from config import DEFAULT_LANGUAGE
 from services.text_manager import get_text
 from config import INTERFACE_IMAGES_FOLDER, DEFAULT_LANGUAGE
 from utils.message_utils import send_message_with_image
+from utils.admin_logger import log_bot_start
 import os
 
 # Создаем роутер для обработчиков старта
@@ -19,6 +20,9 @@ async def cmd_start(message: Message):
     """
     Обработчик команды /start - отправляет приветствие и предлагает выбрать язык
     """
+    # Логируем запуск бота
+    await log_bot_start(message.bot, message.from_user)
+    
     keyboard = get_language_keyboard()
 
     # Отправляем сообщение с выбором языка

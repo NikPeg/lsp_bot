@@ -15,6 +15,7 @@ from services.file_manager import get_faculties, check_faculty_exists
 
 from config import PROFILE_INSTRUCTIONS, DEFAULT_LANGUAGE
 from utils.emoji import add_emoji_to_text
+from utils.admin_logger import log_faculty_selection
 
 # Создаем роутер для обработчиков профиля
 router = Router()
@@ -160,6 +161,9 @@ async def faculty_callback(callback_query: CallbackQuery, user_language: str = D
 
     # Сохраняем выбранный факультет
     await set_user_faculty(user_id, faculty)
+
+    # Логируем выбор факультета
+    await log_faculty_selection(callback_query.bot, callback_query.from_user, faculty)
 
     # Получаем ключ для перевода названия факультета
     faculty_key = f"faculty_{faculty.split()[0][0]}_name"

@@ -7,6 +7,7 @@ load_dotenv()
 
 # Основные настройки бота
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_GROUP_ID = os.getenv("ADMIN_GROUP_ID")
 CHANNEL_LINK = os.getenv("CHANNEL_LINK")
 MATERIALS_FOLDER = os.getenv("MATERIALS_FOLDER", "data/materials")
 IMAGES_FOLDER = os.getenv("IMAGES_FOLDER", "images/schedule")
