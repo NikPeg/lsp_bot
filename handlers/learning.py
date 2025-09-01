@@ -17,6 +17,7 @@ from utils.emoji import add_emoji_to_text
 from aiogram.types import Message, CallbackQuery, FSInputFile
 
 from config import MATERIALS_FOLDER, DEFAULT_LANGUAGE
+from utils.file_handler import send_large_file
 
 # Создаем роутер для обработчиков центра обучения
 router = Router()
@@ -113,7 +114,7 @@ async def navigate_callback(callback_query: CallbackQuery, user_language: str = 
 @router.callback_query(F.data.startswith("dl:"))
 async def download_file_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
     """
-    Обработчик скачивания файла
+    Обработчик скачивания файла с поддержкой больших файлов
     """
     # Получаем идентификатор пути и восстанавливаем полный путь к файлу
     path_id = callback_query.data.split(":")[1]
@@ -135,28 +136,39 @@ async def download_file_callback(callback_query: CallbackQuery, user_language: s
 
     # Получаем имя файла
     file_name = os.path.basename(file_path)
+    
+    # Получаем бота из callback_query
+    bot = callback_query.bot
+    chat_id = callback_query.message.chat.id
 
     try:
-        # Создаем объект FSInputFile для отправки
-        file = FSInputFile(file_path)
-
         # Проверяем, является ли файл изображением
-        if is_image_file(file_name):
-            # Отправляем файл как фото
-            await callback_query.message.answer_photo(
-                photo=file,
-                caption=file_name,
+        is_photo = is_image_file(file_name)
+        
+        # Используем новую функцию для отправки больших файлов
+        success, message = await send_large_file(
+            bot=bot,
+            chat_id=chat_id,
+            file_path=file_path,
+            caption=file_name,
+            is_photo=is_photo
+        )
+        
+        if success:
+            # Отправляем клавиатуру после успешной отправки файла
+            await callback_query.message.answer(
+                text=message,
                 reply_markup=get_after_file_keyboard(user_language)
             )
         else:
-            # Отправляем файл как документ
-            await callback_query.message.answer_document(
-                document=file,
-                caption=file_name,
-                reply_markup=get_after_file_keyboard(user_language)
+            # В случае ошибки сообщаем пользователю
+            await callback_query.message.answer(
+                text=f"{get_text(user_language, 'error_sending_file')}: {message}",
+                reply_markup=get_back_keyboard(user_language, "back_to_materials")
             )
+            
     except Exception as e:
-        # В случае ошибки сообщаем пользователю
+        # В случае неожиданной ошибки сообщаем пользователю
         await callback_query.message.answer(
             text=f"{get_text(user_language, 'error_sending_file')}: {str(e)}",
             reply_markup=get_back_keyboard(user_language, "back_to_materials")

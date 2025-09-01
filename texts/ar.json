@@ -50,5 +50,11 @@
   "univ_reaviz": "جامعة ريافيز",
   "univ_spbmsi": "معهد سانت بطرسبرغ الطبي",
   "language_settings_button": "إعدادات اللغة",
-  "language_settings_text": "حدد لغة الواجهة:"
+  "language_settings_text": "حدد لغة الواجهة:",
+  "error_sending_file": "خطأ في إرسال الملف",
+  "file_too_large": "الملف كبير جداً",
+  "compressing_file": "جاري ضغط الملف...",
+  "splitting_file": "جاري تقسيم الملف إلى أجزاء...",
+  "file_sent_compressed": "تم إرسال الملف مضغوطاً",
+  "file_sent_in_parts": "تم إرسال الملف على أجزاء"
 }

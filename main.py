@@ -10,6 +10,7 @@ from middlewares import setup_middleware
 from database.models import init_db
 from database.db_manager import update_user_activity
 from config import DATABASE_PATH
+from utils.file_handler import cleanup_temp_files
 
 # Настройка логирования
 logging.basicConfig(
@@ -49,6 +50,9 @@ async def on_startup():
     # Добавляем middleware для отслеживания активности
     dp.message.middleware(ActivityMiddleware())
     dp.callback_query.middleware(ActivityMiddleware())
+
+    # Очищаем временные файлы при запуске
+    cleanup_temp_files()
 
     logger.info("Bot started successfully!")
 
