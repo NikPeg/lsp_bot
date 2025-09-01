@@ -5,6 +5,7 @@ import asyncio
 from typing import Optional, List, Tuple
 from aiogram.types import FSInputFile, Message, CallbackQuery
 from aiogram import Bot
+from services.text_manager import get_text
 
 # Лимиты Telegram API (в байтах)
 TELEGRAM_FILE_SIZE_LIMIT = 50 * 1024 * 1024  # 50 МБ
@@ -163,8 +164,43 @@ async def create_multipart_archives(file_path: str, max_archive_size: int = 45 *
         print(f"Ошибка создания многотомного архива: {e}")
         return []
 
-async def send_large_file(bot: Bot, chat_id: int, file_path: str, caption: str = "", 
-                         is_photo: bool = False) -> Tuple[bool, str]:
+def get_multipart_instructions(language: str, parts_count: int) -> str:
+    """
+    Получает локализованную инструкцию по распаковке многотомного архива
+    
+    Args:
+        language (str): Код языка
+        parts_count (int): Количество частей архива
+        
+    Returns:
+        str: Инструкция на нужном языке
+    """
+    if language == "en":
+        instruction = f"\n📋 File recovery instructions:\n"
+        instruction += f"1️⃣ Download all {parts_count} volumes\n"
+        instruction += f"2️⃣ Extract .dat files from each archive\n"
+        instruction += f"3️⃣ Combine parts in correct order:\n"
+        instruction += f"   • Windows: copy /b part01.dat + part02.dat + ... file.pdf\n"
+        instruction += f"   • Linux/Mac: cat part01.dat part02.dat ... > file.pdf"
+    elif language == "ar":
+        instruction = f"\n📋 تعليمات استعادة الملف:\n"
+        instruction += f"1️⃣ قم بتنزيل جميع الأجزاء الـ {parts_count}\n"
+        instruction += f"2️⃣ استخرج ملفات .dat من كل أرشيف\n"
+        instruction += f"3️⃣ ادمج الأجزاء بالترتيب الصحيح:\n"
+        instruction += f"   • Windows: copy /b part01.dat + part02.dat + ... file.pdf\n"
+        instruction += f"   • Linux/Mac: cat part01.dat part02.dat ... > file.pdf"
+    else:  # ru
+        instruction = f"\n📋 Инструкция по восстановлению файла:\n"
+        instruction += f"1️⃣ Скачайте все {parts_count} томов\n"
+        instruction += f"2️⃣ Извлеките .dat файлы из каждого архива\n"
+        instruction += f"3️⃣ Объедините части в правильном порядке:\n"
+        instruction += f"   • Windows: copy /b part01.dat + part02.dat + ... file.pdf\n"
+        instruction += f"   • Linux/Mac: cat part01.dat part02.dat ... > file.pdf"
+    
+    return instruction
+
+async def send_large_file(bot: Bot, chat_id: int, file_path: str, caption: str = "",
+                         is_photo: bool = False, language: str = "ru") -> Tuple[bool, str]:
     """
     Отправляет большой файл, применяя различные стратегии
     
@@ -234,6 +270,9 @@ async def send_large_file(bot: Bot, chat_id: int, file_path: str, caption: str =
             for i, archive_path in enumerate(archives, 1):
                 archive_size = await get_file_size(archive_path)
                 info_text += f"Том {i}: {format_file_size(archive_size)}\n"
+            
+            # Добавляем локализованную инструкцию по распаковке
+            info_text += get_multipart_instructions(language, len(archives))
         
         await bot.send_message(chat_id, info_text)
         
