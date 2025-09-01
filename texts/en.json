@@ -27,6 +27,8 @@
   "splitting_file": "Splitting file into parts...",
   "file_sent_compressed": "File sent compressed",
   "file_sent_in_parts": "File sent in parts",
+  "creating_multipart_archive": "Creating multipart archive...",
+  "multipart_archive_created": "Multipart archive created",
   "faculty_not_found": "Faculty not found",
   "deanery_button": "Dean's Office",
   "sports_doctor_button": "Sports Doctor",

@@ -98,26 +98,39 @@ async def create_compressed_archive(file_path: str, compression_level: int = 6) 
         print(f"Ошибка создания архива: {e}")
         return None
 
-async def split_file(file_path: str, chunk_size: int = 45 * 1024 * 1024) -> List[str]:
+async def create_multipart_archives(file_path: str, max_archive_size: int = 45 * 1024 * 1024) -> List[str]:
     """
-    Разбивает файл на части
+    Создает многотомный ZIP архив из файла
     
     Args:
         file_path (str): Путь к исходному файлу
-        chunk_size (int): Размер части в байтах (по умолчанию 45 МБ)
+        max_archive_size (int): Максимальный размер одного архива в байтах
         
     Returns:
-        List[str]: Список путей к частям файла
+        List[str]: Список путей к архивам
     """
     try:
         temp_dir = tempfile.gettempdir()
         file_name = os.path.basename(file_path)
         base_name = os.path.splitext(file_name)[0]
-        extension = os.path.splitext(file_name)[1]
         
-        parts = []
+        archives = []
         
-        def split_file_sync():
+        def create_archives_sync():
+            file_size = os.path.getsize(file_path)
+            
+            # Если файл помещается в один архив
+            if file_size <= max_archive_size * 0.9:  # 90% от лимита для запаса
+                archive_path = os.path.join(temp_dir, f"{base_name}.zip")
+                with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zipf:
+                    zipf.write(file_path, file_name)
+                archives.append(archive_path)
+                return
+            
+            # Создаем многотомный архив
+            # Читаем файл частями и создаем отдельные архивы
+            chunk_size = int(max_archive_size * 0.8)  # 80% от лимита для сжатия
+            
             with open(file_path, 'rb') as source_file:
                 part_num = 1
                 while True:
@@ -125,20 +138,29 @@ async def split_file(file_path: str, chunk_size: int = 45 * 1024 * 1024) -> List
                     if not chunk:
                         break
                     
-                    part_name = f"{base_name}.part{part_num:03d}{extension}"
-                    part_path = os.path.join(temp_dir, part_name)
+                    # Создаем временный файл для части
+                    temp_part_path = os.path.join(temp_dir, f"temp_part_{part_num}.dat")
+                    with open(temp_part_path, 'wb') as temp_part:
+                        temp_part.write(chunk)
                     
-                    with open(part_path, 'wb') as part_file:
-                        part_file.write(chunk)
+                    # Создаем архив для этой части
+                    archive_name = f"{base_name}_part{part_num:02d}.zip"
+                    archive_path = os.path.join(temp_dir, archive_name)
                     
-                    parts.append(part_path)
+                    with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zipf:
+                        zipf.write(temp_part_path, f"{base_name}_part{part_num:02d}.dat")
+                    
+                    archives.append(archive_path)
+                    
+                    # Удаляем временный файл части
+                    os.remove(temp_part_path)
                     part_num += 1
         
-        await asyncio.to_thread(split_file_sync)
-        return parts
+        await asyncio.to_thread(create_archives_sync)
+        return archives
         
     except Exception as e:
-        print(f"Ошибка разбивки файла: {e}")
+        print(f"Ошибка создания многотомного архива: {e}")
         return []
 
 async def send_large_file(bot: Bot, chat_id: int, file_path: str, caption: str = "", 
@@ -195,42 +217,52 @@ async def send_large_file(bot: Bot, chat_id: int, file_path: str, caption: str =
                 await asyncio.to_thread(os.remove, compressed_path)
                 return False, f"Ошибка при отправке сжатого файла: {str(e)}"
     
-    # Сжатие не помогло, разбиваем на части
-    await bot.send_message(chat_id, "📂 Разбиваю файл на части...")
+    # Сжатие не помогло, создаем многотомный архив
+    await bot.send_message(chat_id, "📂 Создаю многотомный архив...")
     
-    parts = await split_file(file_path)
-    if not parts:
-        return False, "Не удалось разбить файл на части"
+    archives = await create_multipart_archives(file_path)
+    if not archives:
+        return False, "Не удалось создать многотомный архив"
     
     try:
-        # Отправляем информацию о частях
-        parts_info = f"📂 Файл разбит на {len(parts)} частей:\n"
-        for i, part_path in enumerate(parts, 1):
-            part_size = await get_file_size(part_path)
-            parts_info += f"Часть {i}: {format_file_size(part_size)}\n"
+        # Отправляем информацию об архивах
+        if len(archives) == 1:
+            archive_size = await get_file_size(archives[0])
+            info_text = f"📦 Создан сжатый архив ({format_file_size(archive_size)})"
+        else:
+            info_text = f"📂 Создан многотомный архив из {len(archives)} частей:\n"
+            for i, archive_path in enumerate(archives, 1):
+                archive_size = await get_file_size(archive_path)
+                info_text += f"Том {i}: {format_file_size(archive_size)}\n"
         
-        await bot.send_message(chat_id, parts_info)
+        await bot.send_message(chat_id, info_text)
         
-        # Отправляем каждую часть
-        for i, part_path in enumerate(parts, 1):
-            part_file = FSInputFile(part_path)
-            part_caption = f"Часть {i}/{len(parts)}: {os.path.basename(part_path)}"
+        # Отправляем каждый архив
+        for i, archive_path in enumerate(archives, 1):
+            archive_file = FSInputFile(archive_path)
+            if len(archives) == 1:
+                archive_caption = f"📦 {os.path.basename(archive_path)}"
+            else:
+                archive_caption = f"📂 Том {i}/{len(archives)}: {os.path.basename(archive_path)}"
             
-            await bot.send_document(chat_id, document=part_file, caption=part_caption)
+            await bot.send_document(chat_id, document=archive_file, caption=archive_caption)
             
-            # Удаляем временный файл части
-            await asyncio.to_thread(os.remove, part_path)
+            # Удаляем временный архив
+            await asyncio.to_thread(os.remove, archive_path)
         
-        return True, f"Файл отправлен в {len(parts)} частях"
+        if len(archives) == 1:
+            return True, "Файл отправлен в виде сжатого архива"
+        else:
+            return True, f"Файл отправлен многотомным архивом ({len(archives)} томов)"
         
     except Exception as e:
         # Очищаем временные файлы при ошибке
-        for part_path in parts:
+        for archive_path in archives:
             try:
-                await asyncio.to_thread(os.remove, part_path)
+                await asyncio.to_thread(os.remove, archive_path)
             except:
                 pass
-        return False, f"Ошибка при отправке частей файла: {str(e)}"
+        return False, f"Ошибка при отправке архивов: {str(e)}"
 
 def cleanup_temp_files():
     """
@@ -239,7 +271,7 @@ def cleanup_temp_files():
     try:
         temp_dir = tempfile.gettempdir()
         for filename in os.listdir(temp_dir):
-            if filename.startswith(('compressed_', 'part')):
+            if filename.startswith(('compressed_', 'part', 'temp_part_')) or '_part' in filename and filename.endswith('.zip'):
                 file_path = os.path.join(temp_dir, filename)
                 try:
                     os.remove(file_path)

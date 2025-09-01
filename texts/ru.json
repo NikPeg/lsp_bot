@@ -27,6 +27,8 @@
   "splitting_file": "Разбиваю файл на части...",
   "file_sent_compressed": "Файл отправлен в сжатом виде",
   "file_sent_in_parts": "Файл отправлен по частям",
+  "creating_multipart_archive": "Создаю многотомный архив...",
+  "multipart_archive_created": "Создан многотомный архив",
   "learning_center_text": "Центр обучения - доступ к учебным материалам",
   "language_settings_button": "Настройки языка",
   "language_settings_text": "Выберите язык интерфейса:",

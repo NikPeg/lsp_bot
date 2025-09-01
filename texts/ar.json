@@ -56,5 +56,7 @@
   "compressing_file": "جاري ضغط الملف...",
   "splitting_file": "جاري تقسيم الملف إلى أجزاء...",
   "file_sent_compressed": "تم إرسال الملف مضغوطاً",
-  "file_sent_in_parts": "تم إرسال الملف على أجزاء"
+  "file_sent_in_parts": "تم إرسال الملف على أجزاء",
+  "creating_multipart_archive": "جاري إنشاء أرشيف متعدد الأجزاء...",
+  "multipart_archive_created": "تم إنشاء أرشيف متعدد الأجزاء"
 }
