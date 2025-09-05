@@ -1,12 +1,14 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.exceptions import TelegramBadRequest
 
 from keyboards.profile_kb import get_language_settings_keyboard
 from keyboards.university_kb import get_university_selection_keyboard, get_faculty_selection_keyboard_with_selected
 from keyboards.main_kb import get_main_keyboard
 from config import INTERFACE_IMAGES_FOLDER
 from utils.message_utils import send_message_with_image
+from utils.message_edit_utils import safe_edit_caption, safe_edit_text
 import os
 from database.db_manager import set_user_faculty, get_user_faculty, set_user_language
 
@@ -81,15 +83,10 @@ async def university_callback(callback_query: CallbackQuery, user_language: str 
 
     # Проверяем, есть ли у сообщения фото
     if callback_query.message.photo:
-        try:
-            # Если это фото, пытаемся обновить подпись и клавиатуру
-            await callback_query.message.edit_caption(
-                caption=profile_text,
-                reply_markup=keyboard
-            )
+        # Используем безопасное редактирование подписи
+        edited = await safe_edit_caption(callback_query, profile_text, keyboard)
+        if edited:
             return
-        except Exception as e:
-            print(f"Error editing caption: {e}")
 
     try:
         # Пробуем удалить предыдущее сообщение, если не удалось обновить подпись
@@ -127,15 +124,10 @@ async def back_to_university_callback(callback_query: CallbackQuery, user_langua
 
     # Проверяем, есть ли у сообщения фото
     if callback_query.message.photo:
-        try:
-            # Если это фото, пытаемся обновить подпись и клавиатуру
-            await callback_query.message.edit_caption(
-                caption=profile_text,
-                reply_markup=keyboard
-            )
+        # Используем безопасное редактирование подписи
+        edited = await safe_edit_caption(callback_query, profile_text, keyboard)
+        if edited:
             return
-        except Exception as e:
-            print(f"Error editing caption: {e}")
 
     try:
         # Пробуем удалить предыдущее сообщение, если не удалось обновить подпись
@@ -190,15 +182,10 @@ async def faculty_callback(callback_query: CallbackQuery, user_language: str = D
 
     # Проверяем, есть ли у сообщения фото
     if callback_query.message.photo:
-        try:
-            # Если это фото, пытаемся обновить подпись и клавиатуру
-            await callback_query.message.edit_caption(
-                caption=profile_text,
-                reply_markup=keyboard
-            )
+        # Используем безопасное редактирование подписи
+        edited = await safe_edit_caption(callback_query, profile_text, keyboard)
+        if edited:
             return
-        except Exception as e:
-            print(f"Error editing caption: {e}")
 
     try:
         # Пробуем удалить предыдущее сообщение, если не удалось обновить подпись
@@ -247,10 +234,7 @@ async def open_language_settings_callback(callback_query: CallbackQuery, user_la
     else:
         # Отвечаем на callback и обновляем текстовое сообщение
         await callback_query.answer()
-        await callback_query.message.edit_text(
-            text=text,
-            reply_markup=keyboard
-        )
+        await safe_edit_text(callback_query, text, keyboard)
 
 @router.callback_query(F.data.startswith("change_language:"))
 async def change_language_callback(callback_query: CallbackQuery, user_language: str = DEFAULT_LANGUAGE):
@@ -277,10 +261,7 @@ async def change_language_callback(callback_query: CallbackQuery, user_language:
 
     # Отвечаем на callback и обновляем сообщение
     await callback_query.answer(f"Language set to {language_code}")
-    await callback_query.message.edit_text(
-        text=text,
-        reply_markup=keyboard
-    )
+    await safe_edit_text(callback_query, text, keyboard)
 
     # Обновляем клавиатуру главного меню
     main_keyboard = get_main_keyboard(language_code)

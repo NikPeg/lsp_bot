@@ -3,6 +3,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 
 from config import BOT_TOKEN
 from handlers import register_all_handlers
@@ -56,17 +57,48 @@ async def on_startup():
 
     logger.info("Bot started successfully!")
 
+async def global_error_handler(update: types.Update, exception: Exception):
+    """
+    Глобальный обработчик ошибок для graceful обработки исключений
+    """
+    logger.error(f"Unhandled exception in update {update}: {exception}", exc_info=True)
+    
+    # Обрабатываем специфичные ошибки Telegram
+    if isinstance(exception, TelegramBadRequest):
+        if "message is not modified" in str(exception):
+            logger.debug("Ignored 'message is not modified' error")
+            return True  # Игнорируем эту ошибку
+        elif "message to edit not found" in str(exception):
+            logger.debug("Ignored 'message to edit not found' error")
+            return True
+    elif isinstance(exception, TelegramNetworkError):
+        logger.warning(f"Network error: {exception}")
+        return True  # Продолжаем работу при сетевых ошибках
+    
+    # Для остальных ошибок логируем и продолжаем
+    return True
+
 async def main():
     """
     Главная функция запуска бота
     """
     # Устанавливаем обработчик события запуска
     dp.startup.register(on_startup)
+    
+    # Регистрируем глобальный обработчик ошибок
+    dp.errors.register(global_error_handler)
 
     # Запускаем бота
     try:
+        logger.info("Starting bot polling...")
         await dp.start_polling(bot)
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Critical error in main loop: {e}", exc_info=True)
+        raise
     finally:
+        logger.info("Closing bot session...")
         await bot.session.close()
 
 if __name__ == "__main__":

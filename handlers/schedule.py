@@ -1,5 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.exceptions import TelegramBadRequest
 import os
 
 from keyboards.schedule_kb import get_schedule_keyboard
@@ -7,11 +8,11 @@ from keyboards.inline_kb import get_back_keyboard
 
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
+from utils.message_edit_utils import safe_edit_text
 
 from config import IMAGES_FOLDER, DEFAULT_LANGUAGE
 from config import INTERFACE_IMAGES_FOLDER, IMAGES_FOLDER
 from utils.message_utils import send_message_with_image
-import os
 # Создаем роутер для обработчиков расписания
 router = Router()
 
@@ -113,13 +114,9 @@ async def back_to_schedule_callback(callback_query: CallbackQuery, user_language
     # Отвечаем на callback
     await callback_query.answer()
 
-    try:
-        # Пробуем отредактировать текущее сообщение
-        await callback_query.message.edit_text(
-            text=schedule_text,
-            reply_markup=keyboard
-        )
-    except Exception:
+    # Используем безопасное редактирование текста
+    edited = await safe_edit_text(callback_query, schedule_text, keyboard)
+    if not edited:
         # Если не получается отредактировать (например, если это фото),
         # удаляем текущее сообщение и отправляем новое
         try:

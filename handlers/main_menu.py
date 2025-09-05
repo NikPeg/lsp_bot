@@ -1,7 +1,9 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.exceptions import TelegramBadRequest
 from config import INTERFACE_IMAGES_FOLDER
 from utils.message_utils import send_message_with_image
+from utils.message_edit_utils import safe_edit_text
 from keyboards.main_kb import get_main_keyboard
 from services.text_manager import get_text
 from utils.emoji import add_emoji_to_text
@@ -67,13 +69,9 @@ async def back_to_main_callback(callback_query: CallbackQuery, user_language: st
     # Путь к изображению
     image_path = os.path.join(INTERFACE_IMAGES_FOLDER, "main_menu.png")
 
-    try:
-        # Пробуем отредактировать текущее сообщение
-        await callback_query.message.edit_text(
-            text=main_menu_text,
-            reply_markup=main_keyboard
-        )
-
+    # Используем безопасное редактирование текста
+    edited = await safe_edit_text(callback_query, main_menu_text, main_keyboard)
+    if edited:
         # Отправляем изображение отдельным сообщением
         photo = FSInputFile(image_path)
         await callback_query.message.answer_photo(
@@ -81,7 +79,7 @@ async def back_to_main_callback(callback_query: CallbackQuery, user_language: st
             caption=main_menu_text,
             reply_markup=main_keyboard
         )
-    except Exception:
+    else:
         # Если не получается отредактировать, отправляем новое сообщение с изображением
         await send_message_with_image(
             message=callback_query.message,

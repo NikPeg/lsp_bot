@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
+from aiogram.exceptions import TelegramBadRequest
 
 from keyboards.language_kb import get_language_keyboard
 from keyboards.main_kb import get_main_keyboard
@@ -9,6 +10,7 @@ from config import DEFAULT_LANGUAGE
 from services.text_manager import get_text
 from config import INTERFACE_IMAGES_FOLDER, DEFAULT_LANGUAGE
 from utils.message_utils import send_message_with_image
+from utils.message_edit_utils import safe_edit_text
 from utils.admin_logger import log_bot_start
 import os
 
@@ -55,14 +57,8 @@ async def language_callback(callback_query: CallbackQuery):
     # Отвечаем на callback
     await callback_query.answer(f"Language set to {language_code}")
 
-    try:
-        # Пробуем изменить текущее сообщение, только если оно отличается от текущего
-        current_text = callback_query.message.text or callback_query.message.caption or ""
-        if current_text != welcome_text:
-            await callback_query.message.edit_text(welcome_text)
-    except Exception as e:
-        # Если возникла ошибка при редактировании, просто логируем ее и продолжаем
-        print(f"Error editing message: {e}")
+    # Используем безопасное редактирование текста
+    await safe_edit_text(callback_query, welcome_text)
 
     main_menu_text = get_text(language_code, "main_menu_text")
     # Отправляем новое сообщение с главным меню и изображением

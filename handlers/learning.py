@@ -1,5 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
+from aiogram.exceptions import TelegramBadRequest
 import os
 
 from keyboards.learning_kb import get_navigation_keyboard
@@ -8,6 +9,7 @@ from keyboards.inline_kb import get_back_keyboard, get_after_file_keyboard
 from database.db_manager import get_user_faculty, get_user_language
 from config import INTERFACE_IMAGES_FOLDER, MATERIALS_FOLDER
 from utils.message_utils import send_message_with_image
+from utils.message_edit_utils import safe_edit_text
 import os
 from services.text_manager import get_text
 from services.file_manager import get_directories, get_files, check_file_exists
@@ -211,13 +213,9 @@ async def back_to_materials_callback(callback_query: CallbackQuery, user_languag
     # Отвечаем на callback
     await callback_query.answer()
 
-    try:
-        # Пробуем отредактировать текущее сообщение
-        await callback_query.message.edit_text(
-            text=text,
-            reply_markup=keyboard
-        )
-    except Exception:
+    # Используем безопасное редактирование текста
+    edited = await safe_edit_text(callback_query, text, keyboard)
+    if not edited:
         # Если не получается отредактировать, удаляем текущее сообщение и отправляем новое
         try:
             await callback_query.message.delete()
