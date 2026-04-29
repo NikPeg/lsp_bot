@@ -1,0 +1,31 @@
+services:
+  lsp_bot:
+    build: .
+    container_name: lsp_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_GROUP_ID=${ADMIN_GROUP_ID}
+      - CHANNEL_LINK=${CHANNEL_LINK}
+      - MATERIALS_FOLDER=${MATERIALS_FOLDER:-data/materials}
+      - IMAGES_FOLDER=${IMAGES_FOLDER:-images/schedule}
+      - INTERFACE_IMAGES_FOLDER=${INTERFACE_IMAGES_FOLDER:-images/interface}
+      - LANGUAGE_DEFAULT=${LANGUAGE_DEFAULT:-ru}
+    volumes:
+      - ./database:/app/database
+      - ./materials:/app/materials
+      - ./images:/app/images
+      - ./texts:/app/texts
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
