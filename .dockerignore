@@ -1,0 +1,12 @@
+materials/
+materials.zip
+images/
+database/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+scripts/
+README.md
